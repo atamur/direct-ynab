@@ -27,15 +27,9 @@ Before marking any task as complete, ALWAYS verify these items:
 
 ### AI Agent Task Backlog : IN PROGRESS
 
-**CURRENT STATUS:** Task 1.3.1.1 completed. Next task: 1.3.2 (Build CLI tool wrapping existing functionality)
+**CURRENT STATUS:** Task 1.3.2 completed. Next task: 1.4 (Extend/Wrap Data Models and Implement Change Tracking)
 
 #### Phase 1: The Read Layer - Integration and Extension
-
-
-  * **TASK 1.3.2: (TDD) Build a ynab_cli tool wrapping the functionality we built up to now (see below for already completed tasks)**
-      * **GOAL:** Ensure cli gives access to all the useful methods we built up to now.
-      * **APPROACH:** Use industry standard cli lib, make sure to approach it with TDD - you can use the same fixtures we already have
-      * **TEST\_CASES:** Validates all commands work
 
   * **TASK 1.4: (TDD) Extend/Wrap Data Models and Implement Change Tracking (src/ynab\_io/models.py)**
       * **GOAL:** Ensure robust validation, include missing models (like `PayeeRenamingRule`), and support change tracking for the Write layer.
@@ -173,3 +167,8 @@ Before marking any task as complete, ALWAYS verify these items:
         - **Comprehensive Assertions**: 42 total tests passing, including 10 new fixture-specific tests with detailed error messages
         - **Code Quality**: Clean implementation with helper methods, comprehensive docstrings, and no TODO comments
         - **TDD Methodology**: Strict Red-Green-Refactor cycle followed with failing tests first, minimal implementation, then refactoring for quality
+  * **TASK 1.3.2: (TDD) Build a ynab_cli tool wrapping the functionality we built up to now (see below for already completed tasks)**
+      * **GOAL:** Ensure cli gives access to all the useful methods we built up to now.
+      * **APPROACH:** Use industry standard cli lib, make sure to approach it with TDD - you can use the same fixtures we already have
+      * **TEST\_CASES:** Validates all commands work
+- 
