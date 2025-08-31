@@ -51,6 +51,28 @@ Since this is a fresh project, standard Python development commands will apply o
 - **Lint code**: `python -m flake8` or `python -m pylint` (once linting tools are added)
 - **Format code**: `python -m black .` (once black is configured)
 
+## Code Quality Standards
+
+### TDD and Code Cleanliness Policy
+When using TDD methodology (tdd-red-green-refactor agent), maintain strict code quality standards:
+
+- **❌ NO TODO Comments**: Never leave TODO comments or placeholder functionality in committed code
+- **❌ NO Unimplemented Code Paths**: Remove all unimplemented features, parameters, or methods that aren't fully functional  
+- **✅ Clean API Design**: Method signatures should only include parameters that are actually used and supported
+- **✅ Documentation Accuracy**: Docstrings must reflect actual functionality, not planned features
+- **✅ Test Coverage**: All code paths must be tested and functional
+
+### Code Quality Review Instructions
+When using the code-quality-reviewer agent, ensure it validates:
+
+1. **No TODO Comments**: Reject any code containing TODO, FIXME, or similar placeholder comments
+2. **No Dead Code**: Identify and flag any unused parameters, methods, or unimplemented functionality  
+3. **Clean Interfaces**: Method signatures should be minimal and focused on actual capabilities
+4. **Documentation Accuracy**: Verify docstrings match implementation reality
+5. **Test Completeness**: Ensure all features are properly tested without mock placeholders for real functionality
+
+This policy ensures production-ready code that doesn't mislead future developers with promises of unimplemented features.
+
 ## External Dependencies Integration Checklist
 
 When adding new external libraries, ALWAYS follow this checklist to avoid oversights:

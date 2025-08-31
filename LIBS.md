@@ -61,6 +61,21 @@ pynab is a Python library for reading YNAB4 budget files. It provides object-ori
 - Line 51 in `ynab.py`: `budget_file = os.path.join(data_folder, guid, 'Budget.yfull')`
 - No delta application logic exists anywhere in the codebase
 
+❌ **No Device Selection Support**: pynab YNAB constructor does not support `device_guid` parameter.
+- Constructor signature: `YNAB(budget_dir, budget_name)` only
+- Device selection happens automatically (latest modification time)
+- Cannot specify particular device GUID for loading specific device data
+
+❌ **Python 3.12+ Compatibility Issue**: pynab uses deprecated `collections.Sequence` (moved to `collections.abc` in Python 3.10+)
+- Requires monkey patching in consuming code: `collections.Sequence = collections.abc.Sequence`
+- See `src/ynab_io/reader.py:10-19` for workaround implementation
+- Issue affects all collection types: `Sequence`, `MutableSequence`, `Mapping`, `MutableMapping`
+
+❌ **Transaction Attribute Naming**: pynab uses different attribute names than expected YNAB4 schema
+- Uses `transaction.account` instead of `transaction.account_id`  
+- Uses `transaction.payee` instead of `transaction.payee_id`
+- Attribute objects are full entity references, not just IDs
+
 ### Data Model Completeness
 
 ✅ **All Required Models Present**:

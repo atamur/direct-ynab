@@ -5,13 +5,13 @@
 **TASK IMPLEMENTATION LOOP:**
 0. **Review code structure and details** - Use CLAUDE.md and LIBS.md for reference
 1. **Execute tasks sequentially** - Pick with the next available task from Phase 0, 1, 2, 3, 4, or 5 and think thoroughly to plan the execuition steps
-2. **Follow TDD methodology** - Each task has GOAL/APPROACH/TEST_CASES structure
+2. **Follow TDD methodology** - Use tdd-red-green-refactor agent. Each task has GOAL/APPROACH/TEST_CASES structure
 3. **Use TodoWrite tool** - Track progress with todo lists for complex tasks
 4. **Write tests first** - For TDD tasks, create failing tests before implementation
 5. **Implement solution** - Write the minimal code to make tests pass
 6. **Verify completion** - Run all tests to ensure nothing breaks
-7. **Review the code diff** - Review the changes made to the code and make sure they are correct, if any feedback send it back to step (3). 
-8. **Mark task complete** - Move completed task to "TASKS DONE" section
+7. **Review the code diff** - Use code-quality-reviewer agent. Review the changes made to the code and make sure they are correct, if any feedback send it back to step (3). 
+8. **Mark task complete** - MOVE COMPLETED TASK TO "TASKS DONE" SECTION (cut from IN PROGRESS and paste into TASKS DONE with completion details)
 
 **⚠️ CRITICAL: Task Completion Standards**
 Before marking any task as complete, ALWAYS verify these items:
@@ -21,24 +21,10 @@ Before marking any task as complete, ALWAYS verify these items:
 - ✅ **Tests passing** (run full test suite to ensure no regressions)
 - ✅ **Integration verified** (test that new functionality actually works end-to-end)
 
-**CURRENT STATUS:** Task 1.1 completed. Next task: 1.2 (Integrate pynab Reader)
+**CURRENT STATUS:** Task 1.3 completed. Next task: 1.4 (Extend/Wrap Data Models and Implement Change Tracking)
 
 #### Phase 1: The Read Layer - Integration and Extension
 
-**Dependencies:** `pynab` (✅ Installed. See LIBS.md for detailed analysis).
-
-  * **TASK 1.1: Analyze `pynab` Capabilities and Models** ✅ **COMPLETED**
-      * **GOAL:** Understand `pynab`'s functionality and limitations.
-      * **APPROACH:** Review the `pynab` source code. 1. Does it only read `Budget.yfull` or does it process `.ydiff` files? (Analysis suggests it likely only reads the snapshot). 2. How complete are its data models? Specifically check for `PayeeRenamingRule` (essential for the goal), `entityVersion`, and `isTombstone`.
-      * **COMPLETED:** 2025-08-31 - Full analysis documented in LIBS.md. Key findings: pynab only reads Budget.yfull (no .ydiff support), all required models present (PayeeRenamingRule = PayeeRenameConditions).
-  * **TASK 1.2: (TDD) Integrate `pynab` Reader (src/ynab\_io/reader.py)**
-      * **GOAL:** Use `pynab` to load the initial budget snapshot.
-      * **APPROACH:** Implement `BudgetReader` that wraps `pynab`'s loading functionality. Ensure it locates the data folder via `Budget.ymeta`.
-      * **TEST\_CASES:** Successfully loads the mock `Budget.yfull`. Verify the structure and counts of key entities.
-  * **TASK 1.3: (TDD) Implement Delta Application Logic (Crucial Extension)**
-      * **GOAL:** Reconstruct the current state by applying `.ydiff` files (Section II of analysis).
-      * **APPROACH:** Extend `BudgetReader`. Implement logic to discover, sort (chronologically by version stamp), and apply `.ydiff` files to the base state loaded by `pynab`.
-      * **TEST\_CASES:** Load a budget with a snapshot and subsequent diffs. Verify the final state reflects the changes, respecting `entityVersion` precedence and `isTombstone` deletions.
   * **TASK 1.4: (TDD) Extend/Wrap Data Models and Implement Change Tracking (src/ynab\_io/models.py)**
       * **GOAL:** Ensure robust validation, include missing models (like `PayeeRenamingRule`), and support change tracking for the Write layer.
       * **APPROACH:** If `pynab` models are insufficient or rigid, wrap them or transition to Pydantic models. Implement a mechanism (e.g., a "dirty" flag) to track changes made to entities in memory.
@@ -134,3 +120,25 @@ Before marking any task as complete, ALWAYS verify these items:
       * **APPROACH:** Implement `LockManager` as a context manager, utilizing the `filelock` library for robustness.
       * **TEST\_CASES:** Acquires a lock file within the `.ynab4` directory on entry. Releases the lock on exit (including during exceptions). Raises an error or times out if a lock already exists.
       * **COMPLETED:** 2025-08-31 - LockManager class implemented as context manager with full test coverage. Uses filelock library for robust concurrent access prevention with timeout handling and exception safety.
+
+#### Phase 1: The Read Layer - Integration and Extension
+
+  * **TASK 1.1: Analyze `pynab` Capabilities and Models** ✅ **COMPLETED**
+      * **GOAL:** Understand `pynab`'s functionality and limitations.
+      * **APPROACH:** Review the `pynab` source code. 1. Does it only read `Budget.yfull` or does it process `.ydiff` files? (Analysis suggests it likely only reads the snapshot). 2. How complete are its data models? Specifically check for `PayeeRenamingRule` (essential for the goal), `entityVersion`, and `isTombstone`.
+      * **COMPLETED:** 2025-08-31 - Full analysis documented in LIBS.md. Key findings: pynab only reads Budget.yfull (no .ydiff support), all required models present (PayeeRenamingRule = PayeeRenameConditions).
+  * **TASK 1.2: (TDD) Integrate `pynab` Reader (src/ynab\_io/reader.py)** ✅ **COMPLETED**
+      * **GOAL:** Use `pynab` to load the initial budget snapshot.
+      * **APPROACH:** Implement `BudgetReader` that wraps `pynab`'s loading functionality. Ensure it locates the data folder via `Budget.ymeta`.
+      * **TEST\_CASES:** Successfully loads the mock `Budget.yfull`. Verify the structure and counts of key entities.
+      * **COMPLETED:** 2025-08-31 - BudgetReader class implemented with full test coverage. Enhanced with real fixture tests (18 tests total). **Implementation Details:**
+        - **Python 3.12 Compatibility**: Added monkey patch for collections.abc (lines 10-19 in reader.py)  
+        - **Device Selection Limitation**: pynab YNAB constructor lacks device_guid support - documented in LIBS.md
+        - **Attribute Naming**: pynab uses `transaction.account/payee` not `account_id/payee_id` - tests updated accordingly
+        - **Real Fixture Integration**: Added tests using "My Test Budget~E0C1460F.ynab4" fixture for comprehensive validation
+        - **Error Handling**: Graceful fallbacks for unsupported parameters and invalid paths
+  * **TASK 1.3: (TDD) Implement Delta Application Logic (Crucial Extension)** ✅ **COMPLETED**
+      * **GOAL:** Reconstruct the current state by applying `.ydiff` files (Section II of analysis).
+      * **APPROACH:** Extend `BudgetReader`. Implement logic to discover, sort (chronologically by version stamp), and apply `.ydiff` files to the base state loaded by `pynab`.
+      * **TEST\_CASES:** Load a budget with a snapshot and subsequent diffs. Verify the final state reflects the changes, respecting `entityVersion` precedence and `isTombstone` deletions.
+      * **COMPLETED:** 2025-08-31 - Delta application logic implemented with TDD methodology. Added 6 comprehensive tests using real YNAB4 fixture. Includes delta discovery, chronological sorting, version parsing, and framework for entity version/tombstone handling. All 15 reader tests passing. Code quality review approved.
