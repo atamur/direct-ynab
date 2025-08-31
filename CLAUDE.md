@@ -46,8 +46,6 @@ Since this is a fresh project, standard Python development commands will apply o
 - **Format code**: `python -m black .` (once black is configured)
 
 ## Project Structure
-
-#### Target Project Structure
 ```
 direct-ynab/
 ├── src/
@@ -69,5 +67,7 @@ direct-ynab/
 ├── tests/
 │   ├── fixtures/         # Mock YNAB4 budget files (Provided by User)
 │   └── ...
+├── CLAUDE.md             # Claude AI Agent general instructions (To be updated as needed)
+├── TASKS.md              # Backlog of tasks for AI agent (split into IN PROGRESS and DONE sections)
 └── pyproject.toml
 ```
