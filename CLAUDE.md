@@ -6,6 +6,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a fresh Python project called "direct-ynab" that appears to be designed for YNAB (You Need A Budget) integration. The project is currently in its initial state with only development environment setup completed.
 
+## Documentation
+
+- **TASKS.md**: Task backlog and implementation progress
+- **LIBS.md**: External library analysis and integration details
+- **CLAUDE.md**: This file - general project guidance
+
 ## Development Environment
 
 - **Language**: Python 3.12.3
@@ -44,6 +50,29 @@ Since this is a fresh project, standard Python development commands will apply o
 - **Run tests**: `python -m pytest` (once pytest is configured)
 - **Lint code**: `python -m flake8` or `python -m pylint` (once linting tools are added)
 - **Format code**: `python -m black .` (once black is configured)
+
+## External Dependencies Integration Checklist
+
+When adding new external libraries, ALWAYS follow this checklist to avoid oversights:
+
+### ✅ Required Steps:
+1. **Install the dependency** in the virtual environment
+2. **Add to pyproject.toml dependencies** (with proper version constraints or git URLs)
+3. **Analyze and document** in LIBS.md (capabilities, limitations, integration strategy)
+4. **Update TASKS.md** to reflect completion status and reference documentation
+5. **Test the integration** to ensure it works correctly
+
+### ✅ Common Oversights to Avoid:
+- ❌ Installing but not adding to pyproject.toml (dependencies won't be tracked)
+- ❌ Adding to pyproject.toml but not documenting in LIBS.md (future developers lack context)
+- ❌ Completing analysis but not updating task status in TASKS.md
+- ❌ Not testing import/basic functionality after installation
+- ❌ Not documenting critical limitations or workarounds needed
+
+### ✅ Documentation Standards:
+- **LIBS.md**: Must include status, repository, installation method, capabilities, limitations, and integration recommendations
+- **TASKS.md**: Must update current status and mark tasks complete with findings summary
+- **CLAUDE.md**: Should reference new documentation when it affects project-wide concerns
 
 ## Project Structure
 ```

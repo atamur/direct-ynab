@@ -3,6 +3,7 @@
 ### AI Agent Task Backlog : IN PROGRESS
 
 **TASK IMPLEMENTATION LOOP:**
+0. **Review code structure and details** - Use CLAUDE.md and LIBS.md for reference
 1. **Execute tasks sequentially** - Pick with the next available task from Phase 0, 1, 2, 3, 4, or 5 and think thoroughly to plan the execuition steps
 2. **Follow TDD methodology** - Each task has GOAL/APPROACH/TEST_CASES structure
 3. **Use TodoWrite tool** - Track progress with todo lists for complex tasks
@@ -12,15 +13,24 @@
 7. **Review the code diff** - Review the changes made to the code and make sure they are correct, if any feedback send it back to step (3). 
 8. **Mark task complete** - Move completed task to "TASKS DONE" section
 
-**CURRENT STATUS:** Task 0.3 completed. Next task: 1.1 (Analyze pynab Capabilities and Models)
+**⚠️ CRITICAL: Task Completion Standards**
+Before marking any task as complete, ALWAYS verify these items:
+- ✅ **Dependencies added to pyproject.toml** (if any new libraries were used)
+- ✅ **Documentation updated** (LIBS.md for external libraries, relevant sections for code changes)
+- ✅ **Task status updated** (mark as completed with summary in TASKS.md)
+- ✅ **Tests passing** (run full test suite to ensure no regressions)
+- ✅ **Integration verified** (test that new functionality actually works end-to-end)
+
+**CURRENT STATUS:** Task 1.1 completed. Next task: 1.2 (Integrate pynab Reader)
 
 #### Phase 1: The Read Layer - Integration and Extension
 
-**Dependencies:** `pynab` (Agent should install this: `pip install git+https://github.com/aldanor/pynab.git` or vendor it if installation fails).
+**Dependencies:** `pynab` (✅ Installed. See LIBS.md for detailed analysis).
 
-  * **TASK 1.1: Analyze `pynab` Capabilities and Models**
+  * **TASK 1.1: Analyze `pynab` Capabilities and Models** ✅ **COMPLETED**
       * **GOAL:** Understand `pynab`'s functionality and limitations.
       * **APPROACH:** Review the `pynab` source code. 1. Does it only read `Budget.yfull` or does it process `.ydiff` files? (Analysis suggests it likely only reads the snapshot). 2. How complete are its data models? Specifically check for `PayeeRenamingRule` (essential for the goal), `entityVersion`, and `isTombstone`.
+      * **COMPLETED:** 2025-08-31 - Full analysis documented in LIBS.md. Key findings: pynab only reads Budget.yfull (no .ydiff support), all required models present (PayeeRenamingRule = PayeeRenameConditions).
   * **TASK 1.2: (TDD) Integrate `pynab` Reader (src/ynab\_io/reader.py)**
       * **GOAL:** Use `pynab` to load the initial budget snapshot.
       * **APPROACH:** Implement `BudgetReader` that wraps `pynab`'s loading functionality. Ensure it locates the data folder via `Budget.ymeta`.
