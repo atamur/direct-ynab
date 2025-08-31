@@ -5,8 +5,10 @@
 **TASK IMPLEMENTATION LOOP:**
 Read CLAUDE.md and afterward - these instructions carefully and follow them step by step.
 
+Use TodoWrite tool to write down all the 8 steps below before you start.
+
 0. **Review code structure and details** - Use CLAUDE.md and LIBS.md for reference
-1. **Execute tasks sequentially** - Pick with the next available task from Phase 0, 1, 2, 3, 4, or 5 and think thoroughly to plan the execuition steps
+1. **Execute tasks sequentially** - Pick with the next available task from Phase 0, 1, 2, 3, 4, or 5 and think thoroughly to plan the execution steps
 2. **Follow TDD methodology** - Use tdd-red-green-refactor agent. Each task has GOAL/APPROACH/TEST_CASES structure
 3. **Use TodoWrite tool** - Track progress with todo lists
 4. **Write tests first** - For TDD tasks, create failing tests before implementation
