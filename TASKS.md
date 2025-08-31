@@ -1,8 +1,10 @@
 ### YNAB4 AI Automation
 
-### AI Agent Task Backlog : IN PROGRESS
+### AI Agent Instructions
 
 **TASK IMPLEMENTATION LOOP:**
+Read CLAUDE.md and afterward - these instructions carefully and follow them step by step.
+
 0. **Review code structure and details** - Use CLAUDE.md and LIBS.md for reference
 1. **Execute tasks sequentially** - Pick with the next available task from Phase 0, 1, 2, 3, 4, or 5 and think thoroughly to plan the execuition steps
 2. **Follow TDD methodology** - Use tdd-red-green-refactor agent. Each task has GOAL/APPROACH/TEST_CASES structure
@@ -21,9 +23,15 @@ Before marking any task as complete, ALWAYS verify these items:
 - ✅ **Tests passing** (run full test suite to ensure no regressions)
 - ✅ **Integration verified** (test that new functionality actually works end-to-end)
 
+### AI Agent Task Backlog : IN PROGRESS
+
 **CURRENT STATUS:** Task 1.3 completed. Next task: 1.4 (Extend/Wrap Data Models and Implement Change Tracking)
 
 #### Phase 1: The Read Layer - Integration and Extension
+
+  * **TASK 1.3.1: Carefully review the provided YNAB fixture file and existing reader rests; then propose write TASK 1.3.1.1 with the goal to cover the fixture test with real assertions based on the data**
+      * **GOAL:** Ensure our tests are validating real fixtures behavior
+      * **APPROACH:** Reading plain text files from fixture should give you an idea of what the data looks like. 
 
   * **TASK 1.4: (TDD) Extend/Wrap Data Models and Implement Change Tracking (src/ynab\_io/models.py)**
       * **GOAL:** Ensure robust validation, include missing models (like `PayeeRenamingRule`), and support change tracking for the Write layer.
