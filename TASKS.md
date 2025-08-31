@@ -5,17 +5,15 @@
 **TASK IMPLEMENTATION LOOP:**
 Read CLAUDE.md and afterward - these instructions carefully and follow them step by step.
 
-Use TodoWrite tool to write down all the 8 steps below before you start.
+Use TodoWrite tool to write down all the 6 steps below before you start.
 
 0. **Review code structure and details** - Use CLAUDE.md and LIBS.md for reference
 1. **Execute tasks sequentially** - Pick with the next available task from Phase 0, 1, 2, 3, 4, or 5 and think thoroughly to plan the execution steps
 2. **Follow TDD methodology** - Use tdd-red-green-refactor agent. Each task has GOAL/APPROACH/TEST_CASES structure
-3. **Use TodoWrite tool** - Track progress with todo lists
-4. **Write tests first** - For TDD tasks, create failing tests before implementation
-5. **Implement solution** - Write the minimal code to make tests pass
-6. **Verify completion** - Run all tests to ensure nothing breaks
-7. **Review the code diff** - Use code-quality-reviewer agent. Review the changes made to the code and make sure they are correct, if any feedback send it back to step (3). 
-8. **Mark task complete** - MOVE COMPLETED TASK TO "TASKS DONE" SECTION (cut from IN PROGRESS and paste into TASKS DONE with completion details)
+3. **Review the code diff** - Use code-quality-reviewer agent. Review the changes made to the code and make sure they are correct, if any feedback send it back to step (3). 
+4. **Mark task complete** - MOVE COMPLETED TASK TO "TASKS DONE" SECTION (cut from IN PROGRESS and paste into TASKS DONE with completion details)
+5. **Append learnings to the task** - Update the task you just moved with learnings that could be useful in the future
+6. **Append global learnings to CLAUDE.md, TASKS.md, and LIBS.md** - Think "how could i have achieved the goal faster?" If anything comes up add that to the relevant documents.
 
 **⚠️ CRITICAL: Task Completion Standards**
 Before marking any task as complete, ALWAYS verify these items:
