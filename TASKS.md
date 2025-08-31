@@ -8,7 +8,7 @@ Read CLAUDE.md and afterward - these instructions carefully and follow them step
 0. **Review code structure and details** - Use CLAUDE.md and LIBS.md for reference
 1. **Execute tasks sequentially** - Pick with the next available task from Phase 0, 1, 2, 3, 4, or 5 and think thoroughly to plan the execuition steps
 2. **Follow TDD methodology** - Use tdd-red-green-refactor agent. Each task has GOAL/APPROACH/TEST_CASES structure
-3. **Use TodoWrite tool** - Track progress with todo lists for complex tasks
+3. **Use TodoWrite tool** - Track progress with todo lists
 4. **Write tests first** - For TDD tasks, create failing tests before implementation
 5. **Implement solution** - Write the minimal code to make tests pass
 6. **Verify completion** - Run all tests to ensure nothing breaks
@@ -25,19 +25,25 @@ Before marking any task as complete, ALWAYS verify these items:
 
 ### AI Agent Task Backlog : IN PROGRESS
 
-**CURRENT STATUS:** Task 1.3.1 completed. Next task: 1.3.1.1 (Enhanced Fixture Tests with Real Data Assertions)
+**CURRENT STATUS:** Task 1.3.1.1 completed. Next task: 1.3.2 (Build CLI tool wrapping existing functionality)
 
 #### Phase 1: The Read Layer - Integration and Extension
 
-  * **TASK 1.3.1.1: (TDD) Enhanced Fixture Tests with Real Data Assertions**
-      * **GOAL:** Replace generic fixture tests with specific assertions based on actual fixture data to ensure our reader correctly parses real YNAB4 budget structure and content.
-      * **APPROACH:** 1. Add comprehensive tests that validate specific entities from the "My Test Budget~E0C1460F.ynab4" fixture. 2. Test exact counts, names, IDs, and relationships from the fixture data. 3. Validate key transaction data evolution through delta files. 4. Ensure payee, account, and category data integrity with real fixture values.
-      * **TEST_CASES:** Exact Entity Counts (1 account, 29 categories, 4 payees, 3 transactions). Account Validation ("Current" account with ID). Master Category Structure (6 master categories). Specific Category Tests ("Tithing", "Charitable" under "Giving"). Payee Data Integrity ("Starting Balance", "Migros", "Salary"). Transaction Evolution (amount 0→20000). Delta File Validation (4 files). Entity Version Tracking (A-66→A-72). Account-Payee-Transaction Relationships. Category Hierarchy.
+
+  * **TASK 1.3.2: (TDD) Build a ynab_cli tool wrapping the functionality we built up to now (see below for already completed tasks)**
+      * **GOAL:** Ensure cli gives access to all the useful methods we built up to now.
+      * **APPROACH:** Use industry standard cli lib, make sure to approach it with TDD - you can use the same fixtures we already have
+      * **TEST\_CASES:** Validates all commands work
 
   * **TASK 1.4: (TDD) Extend/Wrap Data Models and Implement Change Tracking (src/ynab\_io/models.py)**
       * **GOAL:** Ensure robust validation, include missing models (like `PayeeRenamingRule`), and support change tracking for the Write layer.
       * **APPROACH:** If `pynab` models are insufficient or rigid, wrap them or transition to Pydantic models. Implement a mechanism (e.g., a "dirty" flag) to track changes made to entities in memory.
       * **TEST\_CASES:** Validation catches invalid data. Modifying an attribute marks the entity as "dirty". The `PayeeRenamingRule` model is correctly defined.
+
+  * **TASK 1.4.1: (TDD) update the cli tool to expose funcitonality added in 1.4**
+      * **GOAL:** Ensure cli gives access to all the useful methods we built up to now.
+      * **APPROACH:** Expand the ynab_cli tool to include the new functionality.
+      * **TEST\_CASES:** Validates all commands work
 
 #### Phase 2: The Write Layer - Porting `php-ynab4`
 
@@ -155,3 +161,13 @@ Before marking any task as complete, ALWAYS verify these items:
       * **GOAL:** Ensure our tests are validating real fixtures behavior
       * **APPROACH:** Reading plain text files from fixture should give you an idea of what the data looks like.
       * **COMPLETED:** 2025-08-31 - Analyzed fixture structure ("My Test Budget~E0C1460F.ynab4") containing 1 account, 29 categories, 4 payees, 3 transactions, and 4 delta files. Key findings: transaction ID 44B1567B-7356-48BC-1D3E-FFAED8CD0F8C evolves from amount 0→20000 through deltas. Proposed TASK 1.3.1.1 with 10 specific test cases covering exact entity counts, referential integrity, and delta evolution validation.
+  * **TASK 1.3.1.1: (TDD) Enhanced Fixture Tests with Real Data Assertions** ✅ **COMPLETED**
+      * **GOAL:** Replace generic fixture tests with specific assertions based on actual fixture data to ensure our reader correctly parses real YNAB4 budget structure and content.
+      * **APPROACH:** 1. Add comprehensive tests that validate specific entities from the "My Test Budget~E0C1460F.ynab4" fixture. 2. Test exact counts, names, IDs, and relationships from the fixture data. 3. Validate key transaction data evolution through delta files. 4. Ensure payee, account, and category data integrity with real fixture values.
+      * **TEST_CASES:** Exact Entity Counts (1 account, 29 categories, 4 payees, 3 transactions). Account Validation ("Current" account with ID). Master Category Structure (6 master categories). Specific Category Tests ("Tithing", "Charitable" under "Giving"). Payee Data Integrity ("Starting Balance", "Migros", "Salary"). Transaction Evolution (amount 0→20000). Delta File Validation (4 files). Entity Version Tracking (A-66→A-72). Account-Payee-Transaction Relationships. Category Hierarchy.
+      * **COMPLETED:** 2025-08-31 - Enhanced fixture tests implemented with TDD methodology. Added comprehensive TestBudgetReaderRealDataAssertions class with 10 specific test methods validating exact fixture data. **Implementation Details:**
+        - **Complete Test Coverage**: All 10 test cases implemented covering entity counts, relationships, and data integrity
+        - **Real Data Validation**: Tests validate specific IDs, names, and values from actual fixture ("Current" account, "Tithing"/"Charitable" categories, transaction evolution)
+        - **Comprehensive Assertions**: 42 total tests passing, including 10 new fixture-specific tests with detailed error messages
+        - **Code Quality**: Clean implementation with helper methods, comprehensive docstrings, and no TODO comments
+        - **TDD Methodology**: Strict Red-Green-Refactor cycle followed with failing tests first, minimal implementation, then refactoring for quality

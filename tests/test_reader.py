@@ -383,3 +383,286 @@ class TestBudgetReaderDeltaApplication:
             assert hasattr(transaction, 'payee')    # pynab uses 'payee' not 'payee_id'
             assert hasattr(transaction, 'amount')
             assert len(transaction.id) > 0
+
+
+class TestBudgetReaderRealDataAssertions:
+    """Test cases for specific real fixture data validation based on actual content.
+    
+    These tests validate that the BudgetReader correctly parses and provides access to
+    specific data from the real YNAB4 fixture "My Test Budget~E0C1460F.ynab4".
+    Each test verifies exact entity counts, IDs, names, and relationships based on
+    the known structure of the fixture data.
+    """
+    
+    def setUp_reader_and_budget(self):
+        """Helper method to set up reader and load budget with fixture validation."""
+        if not FIXTURE_BUDGET_PATH.exists():
+            pytest.skip("Real fixture not available")
+        
+        reader = BudgetReader(FIXTURE_BUDGET_PATH)
+        budget = reader.load_snapshot()
+        return reader, budget
+    
+    def test_exact_entity_counts(self):
+        """Test exact counts of entities match the known fixture structure.
+        
+        The test fixture contains:
+        - 1 account ("Current")
+        - 29 categories (23 subcategories + 6 regular master categories)
+        - 4 payees (Transfer, Starting Balance, Migros, Salary)
+        - 3 transactions
+        - 7 master categories (including Hidden and Debt)
+        """
+        reader, budget = self.setUp_reader_and_budget()
+        
+        # Exact entity counts based on fixture analysis
+        assert len(budget.accounts) == 1, f"Expected 1 account, found {len(budget.accounts)}"
+        assert len(budget.categories) == 29, f"Expected 29 categories, found {len(budget.categories)}"
+        assert len(budget.payees) == 4, f"Expected 4 payees, found {len(budget.payees)}"
+        assert len(budget.transactions) == 3, f"Expected 3 transactions, found {len(budget.transactions)}"
+        assert len(budget.master_categories) == 7, f"Expected 7 master categories, found {len(budget.master_categories)}"
+    
+    def test_account_validation(self):
+        """Test the single 'Current' account has expected properties."""
+        reader, budget = self.setUp_reader_and_budget()
+        
+        # Verify single account properties
+        assert len(budget.accounts) == 1, "Fixture should have exactly one account"
+        
+        account = budget.accounts[0]
+        assert account.name == "Current", f"Expected account name 'Current', got '{account.name}'"
+        assert account.id == "380A0C46-49AB-0FBA-3F63-FFAED8C529A1", f"Account ID mismatch: {account.id}"
+        assert account.type.value == "Checking", f"Expected Checking account, got {account.type.value}"
+        assert account.on_budget is True, "Current account should be on-budget"
+    
+    def test_master_category_structure(self):
+        """Test master category structure includes all expected categories."""
+        reader, budget = self.setUp_reader_and_budget()
+        
+        master_categories = budget.master_categories
+        master_names = [mc.name for mc in master_categories]
+        
+        # Expected master categories from fixture analysis
+        expected_masters = [
+            "Hidden Categories", "Giving", "Monthly Bills", 
+            "Everyday Expenses", "Rainy Day Funds", "Savings Goals", "Debt"
+        ]
+        
+        assert len(master_categories) == len(expected_masters), (
+            f"Expected {len(expected_masters)} master categories, found {len(master_categories)}"
+        )
+        
+        # Verify all expected master categories exist
+        for expected_name in expected_masters:
+            assert expected_name in master_names, (
+                f"Missing expected master category: {expected_name}. "
+                f"Found: {master_names}"
+            )
+    
+    def test_specific_category_tests(self):
+        """Test specific categories under 'Giving' master category exist with correct IDs."""
+        reader, budget = self.setUp_reader_and_budget()
+        
+        # Find categories under Giving master category
+        giving_categories = [
+            category for category in budget.categories 
+            if category.master_category and category.master_category.name == "Giving"
+        ]
+        
+        # Should find exactly 2 categories under Giving
+        assert len(giving_categories) == 2, (
+            f"Expected 2 categories under Giving, found {len(giving_categories)}"
+        )
+        
+        category_names = [c.name for c in giving_categories]
+        expected_names = ["Tithing", "Charitable"]
+        
+        for expected_name in expected_names:
+            assert expected_name in category_names, (
+                f"Missing expected category under Giving: {expected_name}"
+            )
+        
+        # Verify specific IDs for these categories
+        tithing = next((c for c in giving_categories if c.name == "Tithing"), None)
+        charitable = next((c for c in giving_categories if c.name == "Charitable"), None)
+        
+        assert tithing is not None, "Tithing category not found"
+        assert charitable is not None, "Charitable category not found"
+        assert tithing.id == "A5", f"Expected Tithing ID 'A5', got '{tithing.id}'"
+        assert charitable.id == "A6", f"Expected Charitable ID 'A6', got '{charitable.id}'"
+    
+    def test_payee_data_integrity(self):
+        """Test all expected payees exist with correct properties."""
+        reader, budget = self.setUp_reader_and_budget()
+        
+        payee_names = [p.name for p in budget.payees]
+        expected_payees = ["Transfer : Current", "Starting Balance", "Migros", "Salary"]
+        
+        # Verify all expected payees are present
+        for expected_payee in expected_payees:
+            assert expected_payee in payee_names, (
+                f"Missing expected payee: {expected_payee}. Found: {payee_names}"
+            )
+        
+        # Verify specific payee properties
+        starting_balance = next((p for p in budget.payees if p.name == "Starting Balance"), None)
+        assert starting_balance is not None, "Starting Balance payee not found"
+        assert starting_balance.id == "2FAFFAC4-F271-7544-639C-FFAED8CEB626", (
+            f"Starting Balance ID mismatch: {starting_balance.id}"
+        )
+        assert starting_balance.enabled is False, "Starting Balance should be disabled"
+        
+        # Verify Migros payee is enabled
+        migros = next((p for p in budget.payees if p.name == "Migros"), None)
+        assert migros is not None, "Migros payee not found"
+        assert migros.enabled is True, "Migros payee should be enabled"
+    
+    def test_transaction_evolution(self):
+        """Test the key transaction that evolved from amount 0→20000 through deltas.
+        
+        This transaction (ID: 44B1567B-7356-48BC-1D3E-FFAED8CD0F8C) represents
+        the evolution path documented in the fixture analysis, showing how
+        delta files modify transaction amounts over time.
+        """
+        reader, budget = self.setUp_reader_and_budget()
+        
+        # Find the specific transaction that evolved through deltas
+        test_transaction_id = "44B1567B-7356-48BC-1D3E-FFAED8CD0F8C"
+        transaction = next((t for t in budget.transactions if t.id == test_transaction_id), None)
+        
+        # Verify transaction exists with expected final state
+        assert transaction is not None, f"Transaction {test_transaction_id} not found"
+        assert transaction.amount == 20000, (
+            f"Expected final amount 20000, got {transaction.amount}. "
+            "This transaction should have evolved through delta files."
+        )
+        
+        # Verify relationships
+        assert transaction.account.id == "380A0C46-49AB-0FBA-3F63-FFAED8C529A1", (
+            f"Transaction should reference Current account, got {transaction.account.id}"
+        )
+        assert transaction.payee.id == "2FAFFAC4-F271-7544-639C-FFAED8CEB626", (
+            f"Transaction should reference Starting Balance payee, got {transaction.payee.id}"
+        )
+    
+    def test_delta_file_validation(self):
+        """Test delta files exist in correct chronological order.
+        
+        The fixture contains 4 delta files that show the evolution of
+        the budget state from version A-63 to A-72.
+        """
+        reader, budget = self.setUp_reader_and_budget()
+        
+        delta_files = reader.discover_delta_files()
+        
+        # Verify expected delta file count and ordering
+        expected_deltas = [
+            "A-63_A-67.ydiff", "A-67_A-69.ydiff", 
+            "A-69_A-71.ydiff", "A-71_A-72.ydiff"
+        ]
+        
+        assert len(delta_files) == len(expected_deltas), (
+            f"Expected {len(expected_deltas)} delta files, found {len(delta_files)}"
+        )
+        
+        actual_deltas = [d.name for d in delta_files]
+        assert actual_deltas == expected_deltas, (
+            f"Delta files not in expected order.\nExpected: {expected_deltas}\nActual: {actual_deltas}"
+        )
+    
+    def test_entity_version_tracking(self):
+        """Test that key entities exist in their final evolved state.
+        
+        While pynab doesn't expose entity version tracking directly,
+        we can verify that entities exist in their expected final state
+        after all deltas have been applied.
+        """
+        reader, budget = self.setUp_reader_and_budget()
+        
+        # Verify key transaction exists in final state
+        test_transaction_id = "44B1567B-7356-48BC-1D3E-FFAED8CD0F8C"
+        transaction = next((t for t in budget.transactions if t.id == test_transaction_id), None)
+        
+        assert transaction is not None, "Key evolved transaction should exist"
+        assert transaction.amount == 20000, (
+            f"Transaction should be in final evolved state with amount 20000, got {transaction.amount}"
+        )
+        
+        # Verify account exists in expected state
+        account = budget.accounts[0]
+        assert account.id == "380A0C46-49AB-0FBA-3F63-FFAED8C529A1", (
+            f"Account ID mismatch: {account.id}"
+        )
+        assert account.name == "Current", "Account should be named 'Current'"
+    
+    def test_account_payee_transaction_relationships(self):
+        """Test referential integrity between accounts, payees, and transactions.
+        
+        Ensures all transaction references point to valid accounts and payees,
+        and verifies the specific relationships in the test transaction.
+        """
+        reader, budget = self.setUp_reader_and_budget()
+        
+        # Collect all valid entity IDs
+        account_ids = {a.id for a in budget.accounts}
+        payee_ids = {p.id for p in budget.payees}
+        
+        # Verify all transactions have valid references
+        for i, transaction in enumerate(budget.transactions):
+            assert transaction.account.id in account_ids, (
+                f"Transaction {i} references invalid account ID: {transaction.account.id}"
+            )
+            assert transaction.payee.id in payee_ids, (
+                f"Transaction {i} references invalid payee ID: {transaction.payee.id}"
+            )
+        
+        # Verify specific relationship for the evolved transaction
+        test_transaction_id = "44B1567B-7356-48BC-1D3E-FFAED8CD0F8C"
+        transaction = next((t for t in budget.transactions if t.id == test_transaction_id), None)
+        
+        assert transaction is not None, "Test transaction not found"
+        assert transaction.account.id == "380A0C46-49AB-0FBA-3F63-FFAED8C529A1", (
+            "Test transaction should reference the Current account"
+        )
+        assert transaction.payee.id == "2FAFFAC4-F271-7544-639C-FFAED8CEB626", (
+            "Test transaction should reference the Starting Balance payee"
+        )
+    
+    def test_category_hierarchy(self):
+        """Test category hierarchy structure with proper master-subcategory relationships.
+        
+        Validates the hierarchical structure where master categories contain
+        subcategories, with specific focus on the Giving category structure.
+        """
+        reader, budget = self.setUp_reader_and_budget()
+        
+        master_categories = budget.master_categories
+        sub_categories = budget.categories
+        
+        # Verify hierarchy counts
+        assert len(master_categories) == 7, (
+            f"Expected 7 master categories, found {len(master_categories)}"
+        )
+        assert len(sub_categories) == 29, (
+            f"Expected 29 subcategories, found {len(sub_categories)}"
+        )
+        
+        # Verify Giving master category exists and has correct subcategories
+        giving_master = next((mc for mc in master_categories if mc.name == "Giving"), None)
+        assert giving_master is not None, "Giving master category should exist"
+        
+        giving_subs = [
+            c for c in sub_categories 
+            if c.master_category and c.master_category.name == "Giving"
+        ]
+        assert len(giving_subs) == 2, (
+            f"Giving category should have exactly 2 subcategories, found {len(giving_subs)}: "
+            f"{[c.name for c in giving_subs]}"
+        )
+        
+        # Verify all subcategories have valid master category references
+        orphaned_categories = [c for c in sub_categories if c.master_category is None]
+        assert len(orphaned_categories) == 0, (
+            f"Found {len(orphaned_categories)} categories without master category: "
+            f"{[c.name for c in orphaned_categories]}"
+        )
