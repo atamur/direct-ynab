@@ -42,12 +42,35 @@ class TestCLI:
         assert "Error: Budget path does not exist" in result.stderr
     
     def test_backup_command_success(self, runner, test_budget_path):
-        """Test backup command creates backup file."""
+        """Test backup command creates backup file and cleans it up."""
         result = runner.invoke(app, ["backup", str(test_budget_path)])
         
-        assert result.exit_code == 0
-        assert "Backup created successfully" in result.stdout
-        assert ".zip" in result.stdout
+        try:
+            assert result.exit_code == 0
+            assert "Backup created successfully" in result.stdout
+            assert ".zip" in result.stdout
+        finally:
+            # Cleanup: remove the created backup file to avoid polluting fixtures
+            try:
+                # Parse the path from stdout: line starting with "Backup file:"
+                backup_line = next((line for line in result.stdout.splitlines() if line.startswith("Backup file:")), None)
+                backup_path = None
+                if backup_line:
+                    backup_path_str = backup_line.split("Backup file:", 1)[1].strip()
+                    if backup_path_str:
+                        bp = Path(backup_path_str)
+                        if bp.exists():
+                            backup_path = bp
+                if backup_path is None:
+                    # Fallback: remove the newest matching backup file in the fixtures directory
+                    candidates = list(test_budget_path.parent.glob(f"{test_budget_path.stem}_backup_*.zip"))
+                    if candidates:
+                        backup_path = max(candidates, key=lambda p: p.stat().st_mtime)
+                if backup_path and backup_path.exists():
+                    backup_path.unlink()
+            except Exception:
+                # Best-effort cleanup; do not fail the test due to cleanup
+                pass
     
     def test_backup_command_invalid_path(self, runner):
         """Test backup command with invalid budget path."""
@@ -165,7 +188,30 @@ class TestCLI:
         mock_context.__enter__.assert_called_once()
         mock_context.__exit__.assert_called_once()
         
-        assert result.exit_code == 0
+        try:
+            assert result.exit_code == 0
+        finally:
+            # Cleanup: remove the created backup file to avoid polluting fixtures
+            try:
+                # Parse the path from stdout: line starting with "Backup file:"
+                backup_line = next((line for line in result.stdout.splitlines() if line.startswith("Backup file:")), None)
+                backup_path = None
+                if backup_line:
+                    backup_path_str = backup_line.split("Backup file:", 1)[1].strip()
+                    if backup_path_str:
+                        bp = Path(backup_path_str)
+                        if bp.exists():
+                            backup_path = bp
+                if backup_path is None:
+                    # Fallback: remove the newest matching backup file in the fixtures directory
+                    candidates = list(test_budget_path.parent.glob(f"{test_budget_path.stem}_backup_*.zip"))
+                    if candidates:
+                        backup_path = max(candidates, key=lambda p: p.stat().st_mtime)
+                if backup_path and backup_path.exists():
+                    backup_path.unlink()
+            except Exception:
+                # Best-effort cleanup; do not fail the test due to cleanup
+                pass
     
     @patch('ynab_io.orchestration.cli.locked_budget_operation')
     def test_inspect_command_uses_lock_manager(self, mock_locked_operation, runner, test_budget_path):
