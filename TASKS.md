@@ -9,7 +9,8 @@
 4. **Write tests first** - For TDD tasks, create failing tests before implementation
 5. **Implement solution** - Write the minimal code to make tests pass
 6. **Verify completion** - Run all tests to ensure nothing breaks
-7. **Mark task complete** - Move completed task to "TASKS DONE" section
+7. **Review the code diff** - Review the changes made to the code and make sure they are correct, if any feedback send it back to step (3). 
+8. **Mark task complete** - Move completed task to "TASKS DONE" section
 
 **CURRENT STATUS:** Task 0.3 completed. Next task: 1.1 (Analyze pynab Capabilities and Models)
 
