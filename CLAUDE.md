@@ -68,6 +68,20 @@ This policy ensures production-ready code that doesn't mislead future developers
 - Apply consistent configuration patterns across all model classes
 - Import `ConfigDict` explicitly from pydantic for clarity
 
+### Key Learnings from past runs
+
+**TDD Quality Assurance Process**:
+- Always follow TDD implementation with code-quality-reviewer agent review
+- Initial TDD implementations often contain over-engineering that needs to be trimmed
+- Code review helps ensure adherence to CLAUDE.md standards (no placeholder code, minimal implementation)
+- The review-fix cycle is essential for production-ready code
+
+**Complex System Implementation Patterns**:
+- Break complex systems (like YNAB4 write operations) into comprehensive test suites first
+- Use real-world fixture data to validate implementation correctness
+- Implement graceful failure modes for critical systems where corruption is unacceptable
+- Start minimal and only implement what tests require - avoid over-engineering
+
 ## External Dependencies Integration Checklist
 
 When adding new external libraries, ALWAYS follow this checklist to avoid oversights:
