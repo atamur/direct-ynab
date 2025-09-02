@@ -1,4 +1,4 @@
-"""YNAB CLI Tool - Wrapping BudgetReader, BackupManager, and LockManager functionality."""
+"""YNAB CLI Tool - Wrapping YnabParser, BackupManager, and LockManager functionality."""
 
 import json
 from pathlib import Path
@@ -8,7 +8,7 @@ from contextlib import contextmanager
 import typer
 from typing_extensions import Annotated
 
-from ynab_io.reader import BudgetReader
+from ynab_io.parser import YnabParser
 from ynab_io.safety import BackupManager, LockManager
 
 # Constants
@@ -48,7 +48,6 @@ def locked_budget_operation(budget_path: str):
         # so they'll be handled by the calling function's error handler
         raise
 
-
 def validate_budget_path(budget_path: str) -> Path:
     """
     Validate that the budget path exists and return Path object.
@@ -68,7 +67,6 @@ def validate_budget_path(budget_path: str) -> Path:
         raise typer.Exit(1)
     return path
 
-
 def handle_budget_error(operation: str, error: Exception) -> None:
     """
     Handle budget operation errors with consistent messaging.
@@ -83,62 +81,42 @@ def handle_budget_error(operation: str, error: Exception) -> None:
         typer.echo(f"Error {operation}: {error}", err=True)
     raise typer.Exit(1)
 
-
-def format_currency(amount_cents: int) -> str:
+def format_currency(amount: float) -> str:
     """
-    Format currency amount from cents to dollars.
+    Format currency amount.
     
     Args:
-        amount_cents: Amount in cents
+        amount: Amount
         
     Returns:
         Formatted currency string
     """
-    return f"${amount_cents/100:.2f}"
+    return f"${amount:.2f}"
 
-
-def display_accounts(budget: Any, limit: int = DEFAULT_ITEM_LIMIT) -> None:
+def display_accounts(parser: YnabParser, limit: int = DEFAULT_ITEM_LIMIT) -> None:
     """
     Display account details with name, balance, and type.
     
     Args:
-        budget: Budget object containing accounts
+        parser: YnabParser object containing accounts
         limit: Maximum number of accounts to display
     """
     typer.echo("Account Details:")
-    for account in budget.accounts[:limit]:
-        typer.echo(f"  - {account.name}")
-        typer.echo(f"    Balance: {format_currency(account.balance)}")
-        account_type = getattr(account, 'account_type', getattr(account, 'type', 'Unknown'))
-        typer.echo(f"    Type: {account_type}")
+    for account in list(parser.accounts.values())[:limit]:
+        typer.echo(f"  - {account.accountName}")
+        typer.echo(f"    Type: {account.accountType}")
 
-
-def display_categories(budget: Any, limit: int = DEFAULT_ITEM_LIMIT) -> None:
-    """
-    Display category details with name and budgeted amounts.
-    
-    Args:
-        budget: Budget object containing categories
-        limit: Maximum number of categories to display
-    """
-    typer.echo("Category Details:")
-    for category in budget.categories[:limit]:
-        typer.echo(f"  - {category.name}")
-        budgeted = getattr(category, 'budgeted', 0)
-        typer.echo(f"    Budgeted: {format_currency(budgeted)}")
-
-
-def display_transactions(budget: Any, limit: int = DEFAULT_ITEM_LIMIT) -> None:
+def display_transactions(parser: YnabParser, limit: int = DEFAULT_ITEM_LIMIT) -> None:
     """
     Display transaction details with memo, amount, and date.
     
     Args:
-        budget: Budget object containing transactions
+        parser: YnabParser object containing transactions
         limit: Maximum number of transactions to display
     """
     typer.echo("Transaction Details:")
-    for transaction in budget.transactions[:limit]:
-        typer.echo(f"  - {transaction.memo or 'No memo'}")
+    for transaction in list(parser.transactions.values())[:limit]:
+        typer.echo(f"  - {transaction.payeeId}")
         typer.echo(f"    Amount: {format_currency(transaction.amount)}")
         typer.echo(f"    Date: {transaction.date}")
 
@@ -151,16 +129,15 @@ def load(
     try:
         with locked_budget_operation(budget_path) as path:
             # Load the budget
-            reader = BudgetReader(path)
-            budget = reader.load_snapshot()
+            parser = YnabParser(path)
+            parser.parse()
+            parser.apply_deltas()
             
             # Display basic info
             typer.echo("Budget loaded successfully")
-            typer.echo(f"Budget: {reader._extract_budget_name()}")
-            
-            # Show basic stats
-            typer.echo(f"Accounts: {len(budget.accounts)}")
-            typer.echo(f"Categories: {len(budget.categories)}")
+            typer.echo(f"Accounts: {len(parser.accounts)}")
+            typer.echo(f"Payees: {len(parser.payees)}")
+            typer.echo(f"Transactions: {len(parser.transactions)}")
         
     except Exception as e:
         handle_budget_error("loading budget", e)
@@ -188,65 +165,27 @@ def backup(
 def inspect(
     budget_path: Annotated[str, typer.Argument(help="Path to the .ynab4 budget directory")],
     accounts: Annotated[bool, typer.Option("--accounts", help="Show account details")] = False,
-    categories: Annotated[bool, typer.Option("--categories", help="Show category details")] = False,
     transactions: Annotated[bool, typer.Option("--transactions", help="Show transaction details")] = False,
 ) -> None:
-    """Inspect budget details (accounts, categories, transactions)."""
+    """Inspect budget details (accounts, transactions)."""
     try:
         with locked_budget_operation(budget_path) as path:
             # Load the budget
-            reader = BudgetReader(path)
-            budget = reader.load_snapshot()
+            parser = YnabParser(path)
+            parser.parse()
+            parser.apply_deltas()
             
             # If no specific option, show all
-            show_all = not (accounts or categories or transactions)
+            show_all = not (accounts or transactions)
             
             if show_all or accounts:
-                display_accounts(budget)
-            
-            if show_all or categories:
-                display_categories(budget)
+                display_accounts(parser)
             
             if show_all or transactions:
-                display_transactions(budget)
+                display_transactions(parser)
                 
     except Exception as e:
         handle_budget_error("inspecting budget", e)
-
-
-@app.command()
-def deltas(
-    budget_path: Annotated[str, typer.Argument(help="Path to the .ynab4 budget directory")],
-    show: Annotated[Optional[str], typer.Option("--show", help="Show content of specific delta file")] = None,
-) -> None:
-    """List and show delta files."""
-    try:
-        with locked_budget_operation(budget_path) as path:
-            # Load the budget and discover deltas
-            reader = BudgetReader(path)
-            reader.load_snapshot()
-            delta_files = reader.discover_delta_files()
-            
-            if show:
-                # Find and show specific delta file
-                delta_file = next((df for df in delta_files if df.name == show), None)
-                
-                if not delta_file:
-                    typer.echo("Error: Delta file not found", err=True)
-                    raise typer.Exit(1)
-                
-                typer.echo("Delta File Content:")
-                delta_data = reader._load_delta_file(delta_file)
-                typer.echo(json.dumps(delta_data, indent=2))
-            else:
-                # List all delta files
-                typer.echo("Delta Files Found:")
-                for delta_file in delta_files:
-                    typer.echo(f"  - {delta_file.name}")
-                
-    except Exception as e:
-        handle_budget_error("processing deltas", e)
-
 
 def main() -> None:
     """Main entry point for the CLI."""

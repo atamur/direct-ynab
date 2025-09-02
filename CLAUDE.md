@@ -1,10 +1,6 @@
-# CLAUDE.md
-
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-
 ## Project Overview
 
-This is a fresh Python project called "direct-ynab" that appears to be designed for YNAB (You Need A Budget) integration. The project is currently in its initial state with only development environment setup completed.
+This is a Python project called "direct-ynab" that is designed for YNAB (You Need A Budget) integration. The project uses a custom parser to read YNAB4 budget files and apply deltas.
 
 ## Documentation
 
@@ -22,21 +18,13 @@ This is a fresh Python project called "direct-ynab" that appears to be designed 
 
 To work with this project:
 
-1. Activate the virtual environment:
+Activate the virtual environment:
    ```bash
    source ~/.virtualenvs/direct-ynab/bin/activate
    ```
-
-2. Install dependencies (once requirements.txt or pyproject.toml is created):
-   ```bash
-   pip install -r requirements.txt
-   # or
-   pip install -e .
-   ```
-
 ## Architecture Notes
 
-This project is in its initial state. When code is added, it should follow Python best practices:
+When code is added, it should follow Python best practices:
 
 - Use virtual environment for dependency isolation
 - Create appropriate project structure (src/, tests/, etc.)
@@ -48,8 +36,6 @@ This project is in its initial state. When code is added, it should follow Pytho
 Since this is a fresh project, standard Python development commands will apply once the codebase is established:
 
 - **Run tests**: `python -m pytest` (once pytest is configured)
-- **Lint code**: `python -m flake8` or `python -m pylint` (once linting tools are added)
-- **Format code**: `python -m black .` (once black is configured)
 
 ## Code Quality Standards
 
@@ -62,16 +48,25 @@ When using TDD methodology (tdd-red-green-refactor agent), maintain strict code 
 - **✅ Documentation Accuracy**: Docstrings must reflect actual functionality, not planned features
 - **✅ Test Coverage**: All code paths must be tested and functional
 
-### Code Quality Review Instructions
-When using the code-quality-reviewer agent, ensure it validates:
-
-1. **No TODO Comments**: Reject any code containing TODO, FIXME, or similar placeholder comments
-2. **No Dead Code**: Identify and flag any unused parameters, methods, or unimplemented functionality  
-3. **Clean Interfaces**: Method signatures should be minimal and focused on actual capabilities
-4. **Documentation Accuracy**: Verify docstrings match implementation reality
-5. **Test Completeness**: Ensure all features are properly tested without mock placeholders for real functionality
-
 This policy ensures production-ready code that doesn't mislead future developers with promises of unimplemented features.
+
+### Key Learnings from Phase 1 Implementation
+
+**Dynamic Path Discovery Patterns**:
+- Never hardcode file paths or directory names in YNAB4 file parsing
+- Always read .ydevice files to extract deviceGUID for locating actual data directories
+- Use dynamic discovery methods (`_find_data_dir`, `_find_device_dir`) for robust path resolution
+
+**TDD Testing Standards**:
+- Comprehensive test coverage should include error cases, edge cases, and end-to-end workflows
+- Use real fixture data (not mocked data) for parser validation to catch real-world issues
+- Test count: 24 tests for parser + 14 tests for CLI = 38+ tests for core functionality
+- Mock only external dependencies (like lock timeouts), not core business logic
+
+**Pydantic Best Practices**:
+- Use `ConfigDict(extra='ignore')` instead of deprecated `Config` class
+- Apply consistent configuration patterns across all model classes
+- Import `ConfigDict` explicitly from pydantic for clarity
 
 ## External Dependencies Integration Checklist
 
@@ -84,13 +79,6 @@ When adding new external libraries, ALWAYS follow this checklist to avoid oversi
 4. **Update TASKS.md** to reflect completion status and reference documentation
 5. **Test the integration** to ensure it works correctly
 
-### ✅ Common Oversights to Avoid:
-- ❌ Installing but not adding to pyproject.toml (dependencies won't be tracked)
-- ❌ Adding to pyproject.toml but not documenting in LIBS.md (future developers lack context)
-- ❌ Completing analysis but not updating task status in TASKS.md
-- ❌ Not testing import/basic functionality after installation
-- ❌ Not documenting critical limitations or workarounds needed
-
 ### ✅ Documentation Standards:
 - **LIBS.md**: Must include status, repository, installation method, capabilities, limitations, and integration recommendations
 - **TASKS.md**: Must update current status and mark tasks complete with findings summary
@@ -100,9 +88,9 @@ When adding new external libraries, ALWAYS follow this checklist to avoid oversi
 ```
 direct-ynab/
 ├── src/
-│   ├── ynab_io/          # Data Access Layer (Integration of pynab/php-ynab4)
-│   │   ├── models.py     # Pydantic models or extensions/wrappers for pynab models
-│   │   ├── reader.py     # State reconstruction (Snapshot + Diffs)
+│   ├── ynab_io/          # Data Access Layer
+│   │   ├── models.py     # Pydantic models for YNAB entities
+│   │   ├── parser.py     # Custom YNAB4 file parser
 │   │   ├── writer.py     # Delta generation (.ydiff)
 │   │   ├── device_manager.py # Device registration and Knowledge tracking
 │   │   └── safety.py     # Backup and Locking
