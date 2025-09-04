@@ -29,15 +29,11 @@ Before marking any task as complete, ALWAYS verify these items:
 
 #### Code Review Suggestions
 
-  * **TASK 2.3: Refactor `YnabParser` for Robust Path Discovery**
-      * **GOAL:** Improve the parser's robustness by reading all `.ydevice` files to dynamically and accurately identify the active device and its data directory.
-      * **APPROACH:** Refactor `_find_device_dir` to read all `.ydevice` files and use the information within them to correctly identify the active device and its corresponding data directory.
-      * **TEST_CASES:** The parser correctly identifies the active device in a multi-device setup. The parser correctly falls back to a default device if no active device can be determined.
-  * **TASK 2.4: Consolidate Path Discovery Logic**
+  * **TASK 2.7: Consolidate Path Discovery Logic**
       * **GOAL:** Centralize all budget-related path discovery into a single `PathManager` class or within the `DeviceManager`.
       * **APPROACH:** Create a centralized `PathManager` or add methods to an existing class (like `DeviceManager`) to handle all budget-related path discovery. This would include finding the `data1~*` directory, the `devices` directory, and the specific device's data directory. All other classes would then use this single source of truth for path information.
       * **TEST_CASES:** The `PathManager` correctly finds all required paths. Other classes correctly use the `PathManager` to get path information.
-  * **TASK 2.5: Enhance CLI Error Handling and User Feedback**
+  * **TASK 2.8: Enhance CLI Error Handling and User Feedback**
       * **GOAL:** Implement more specific error handling in `ynab_io/orchestration/cli.py` to provide users with more precise and actionable feedback.
       * **APPROACH:** Enhance the error handling in the CLI to provide more specific and actionable error messages to the user. For instance, catch more specific exceptions and provide tailored messages. Additionally, the `locked_budget_operation` context manager could be improved to provide more granular error messages about why a lock could not be acquired.
       * **TEST_CASES:** The CLI provides specific error messages for different error conditions. The `locked_budget_operation` context manager provides specific error messages for lock acquisition failures.
@@ -186,3 +182,8 @@ Before marking any task as complete, ALWAYS verify these items:
         - A full integration test is crucial for verifying the correctness of the entire read-modify-write cycle.
         - It is important to ensure that the serialization and deserialization of entities correctly handle all fields, including optional ones like `memo`.
         - The Pydantic `model_dump()` method should be used instead of the deprecated `dict()` method.
+
+  * **TASK 2.6: Refactor `YnabParser` for Robust Path Discovery**
+      * **GOAL:** Improve the parser's robustness by reading all `.ydevice` files to dynamically and accurately identify the active device and its data directory.
+      * **APPROACH:** Refactor `_find_device_dir` to read all `.ydevice` files and use the information within them to correctly identify the active device and its corresponding data directory.
+      * **TEST_CASES:** The parser correctly identifies the active device in a multi-device setup. The parser correctly falls back to a default device if no active device can be determined.
