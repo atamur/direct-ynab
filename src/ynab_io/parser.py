@@ -106,7 +106,7 @@ class YnabParser:
                 collection = self.transactions
                 model = Transaction
             else:
-                logging.warning(f"Unknown entity type '{entity_type}' encountered in delta file.")
+                logging.warning(f"Unknown entity type '{entity_type}' encountered in delta file '{delta_file.name}'. Entity ID: {entity_id}. Available keys: {list(item.keys())}")
                 continue
 
             if item['isTombstone']:
