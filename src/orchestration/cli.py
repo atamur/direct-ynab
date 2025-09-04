@@ -1,18 +1,33 @@
 """YNAB CLI Tool - Wrapping YnabParser, BackupManager, and LockManager functionality."""
 
+import errno
 import json
 from pathlib import Path
-from typing import Optional, Any, Callable, TypeVar, Union
+from typing import Optional, Any, Callable, TypeVar, Union, Generator
 from contextlib import contextmanager
 
 import typer
 from typing_extensions import Annotated
+from filelock import Timeout
 
 from ynab_io.parser import YnabParser
 from ynab_io.safety import BackupManager, LockManager
 
 # Constants
 DEFAULT_ITEM_LIMIT = 3
+
+
+# Error message templates
+ERROR_LOCK_TIMEOUT = "Unable to acquire budget lock: Another application may be using this budget"
+ERROR_PERMISSION_DENIED = "Permission denied accessing budget files"
+ERROR_INSUFFICIENT_DISK_SPACE = "Insufficient disk space for budget operation"
+ERROR_INVALID_BUDGET_DIR = "Invalid budget directory: missing Budget.ymeta file"
+ERROR_NOT_DIRECTORY = "Budget path must be a directory, not a file"
+ERROR_BUDGET_CORRUPTED = "Budget file appears to be corrupted or invalid"
+ERROR_JSON_INVALID = "Budget file contains invalid data format"
+ERROR_DELTA_PROCESSING = "Error processing budget changes"
+ERROR_BACKUP_PERMISSION = "Unable to create backup: insufficient permissions"
+ERROR_BACKUP_DISK_SPACE = "Unable to create backup: insufficient disk space"
 
 # Type variable for generic functions
 T = TypeVar('T')
@@ -22,7 +37,7 @@ app = typer.Typer(help="YNAB4 Budget CLI Tool")
 
 
 @contextmanager
-def locked_budget_operation(budget_path: str):
+def locked_budget_operation(budget_path: str) -> Generator[Path, None, None]:
     """
     Context manager that validates budget path and acquires lock for safe operations.
     
@@ -43,10 +58,24 @@ def locked_budget_operation(budget_path: str):
     try:
         with LockManager(path):
             yield path
+    except Timeout:
+        typer.echo(ERROR_LOCK_TIMEOUT, err=True)
+        raise typer.Exit(1)
+    except PermissionError:
+        typer.echo(ERROR_PERMISSION_DENIED, err=True)
+        raise typer.Exit(1)
+    except OSError as e:
+        if e.errno == errno.ENOSPC:
+            typer.echo(ERROR_INSUFFICIENT_DISK_SPACE, err=True)
+        else:
+            typer.echo(f"System error accessing budget: {e}", err=True)
+        raise typer.Exit(1)
+    except ValueError as e:
+        _handle_value_error_in_lock_operation(e)
+        raise typer.Exit(1)
     except Exception as e:
-        # LockManager exceptions are re-raised as general exceptions
-        # so they'll be handled by the calling function's error handler
-        raise
+        typer.echo(f"Error accessing budget: {e}", err=True)
+        raise typer.Exit(1)
 
 def validate_budget_path(budget_path: str) -> Path:
     """
@@ -67,6 +96,39 @@ def validate_budget_path(budget_path: str) -> Path:
         raise typer.Exit(1)
     return path
 
+
+def _handle_value_error_in_lock_operation(error: ValueError) -> None:
+    """
+    Handle ValueError exceptions in locked_budget_operation context manager.
+    
+    Args:
+        error: The ValueError that was raised
+    """
+    error_msg = str(error)
+    if "missing Budget.ymeta" in error_msg:
+        typer.echo(ERROR_INVALID_BUDGET_DIR, err=True)
+    elif "Budget path must be a directory" in error_msg:
+        typer.echo(ERROR_NOT_DIRECTORY, err=True)
+    else:
+        typer.echo(f"Invalid budget configuration: {error}", err=True)
+
+
+def _extract_error_detail(error_msg: str, delimiter: str = ": ") -> str:
+    """
+    Extract the detailed error message after the last delimiter.
+    
+    Args:
+        error_msg: Full error message
+        delimiter: Delimiter to split on (default ": ")
+        
+    Returns:
+        Detailed error message or full original message if delimiter not found
+    """
+    if delimiter in error_msg:
+        return error_msg.split(delimiter)[-1]
+    return error_msg
+
+
 def handle_budget_error(operation: str, error: Exception) -> None:
     """
     Handle budget operation errors with consistent messaging.
@@ -75,10 +137,49 @@ def handle_budget_error(operation: str, error: Exception) -> None:
         operation: Description of the operation that failed
         error: The exception that was raised
     """
-    if isinstance(error, FileNotFoundError):
-        typer.echo("Error: Budget path does not exist", err=True)
+    error_msg = str(error)
+    
+    # Handle JSON parsing errors (must be before ValueError since JSONDecodeError inherits from ValueError)
+    if isinstance(error, json.JSONDecodeError):
+        typer.echo(ERROR_JSON_INVALID, err=True)
+    
+    # Handle FileNotFoundError
+    elif isinstance(error, FileNotFoundError):
+        if "Invalid YNAB4 budget structure" in error_msg:
+            detail = _extract_error_detail(error_msg)
+            typer.echo(f"Invalid YNAB4 budget structure: {detail}", err=True)
+        else:
+            typer.echo("Error: Budget path does not exist", err=True)
+    
+    # Handle ValueError (corrupted data, invalid structure, delta parsing errors)
+    elif isinstance(error, ValueError):
+        if "Corrupted YNAB4 budget data" in error_msg:
+            detail = _extract_error_detail(error_msg)
+            typer.echo(f"{ERROR_BUDGET_CORRUPTED}: {detail}", err=True)
+        elif "Invalid delta filename format" in error_msg:
+            delta_file = _extract_error_detail(error_msg)
+            typer.echo(f"{ERROR_DELTA_PROCESSING}: {delta_file}", err=True)
+        else:
+            typer.echo(f"Error {operation}: {error}", err=True)
+    
+    # Handle permission errors for backup operations
+    elif isinstance(error, PermissionError):
+        if "backup" in operation:
+            typer.echo(ERROR_BACKUP_PERMISSION, err=True)
+        else:
+            typer.echo(f"Error {operation}: {error}", err=True)
+    
+    # Handle disk space errors
+    elif isinstance(error, OSError) and getattr(error, 'errno', None) == errno.ENOSPC:
+        if "backup" in operation:
+            typer.echo(ERROR_BACKUP_DISK_SPACE, err=True)
+        else:
+            typer.echo(f"Error {operation}: {error}", err=True)
+    
+    # Generic fallback
     else:
         typer.echo(f"Error {operation}: {error}", err=True)
+    
     raise typer.Exit(1)
 
 def format_currency(amount: float) -> str:
