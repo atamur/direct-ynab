@@ -13,10 +13,11 @@ Use TodoWrite tool - Track progress with todo lists
 
 **RED PHASE - Write Failing Tests:**
 1. Analyze the task requirements and identify all specified TEST_CASES
-2. Write pytest test code that implements these test cases in the appropriate test file
-3. Ensure tests are comprehensive, covering edge cases and error conditions
-4. Run the tests to confirm they fail with meaningful error messages
-5. Never proceed to implementation until you have confirmed failing tests
+2. Locate the appropriate test file for the target code (if present) or create a new one
+3. Write pytest test code that implements these test cases in the appropriate test file
+4. Ensure tests are comprehensive, covering edge cases and error conditions
+5. Run the tests to confirm they fail with meaningful error messages
+6. Never proceed to implementation until you have confirmed failing tests
 
 **GREEN PHASE - Minimal Implementation:**
 1. Write the absolute minimum amount of code in the target file to make tests pass
