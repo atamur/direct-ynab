@@ -393,6 +393,206 @@ class TestYnabParser:
         assert 72 in latest_versions
 
 
+class TestYnabParserVersionParsing:
+    """Test cases for version parsing with composite version strings."""
+    
+    @pytest.fixture
+    def parser_with_mock_device_manager(self, tmp_path):
+        """Create a parser with minimal setup for testing version parsing."""
+        # Create minimal budget structure
+        budget_dir = tmp_path / "version_test_budget"
+        budget_dir.mkdir()
+        data_dir = budget_dir / "data1~VERSION_TEST"
+        data_dir.mkdir()
+        devices_dir = data_dir / "devices"
+        devices_dir.mkdir()
+        
+        device_guid = "TEST-DEVICE-GUID"
+        device_dir = data_dir / device_guid
+        device_dir.mkdir()
+        
+        # Create .ydevice file
+        ydevice_file = devices_dir / "A.ydevice"
+        with open(ydevice_file, 'w') as f:
+            json.dump({
+                "deviceGUID": device_guid,
+                "shortDeviceId": "A",
+                "friendlyName": "Test Device",
+                "knowledge": "A-100",
+                "knowledgeInFullBudgetFile": "A-100"
+            }, f)
+        
+        # Create empty Budget.yfull
+        budget_yfull = device_dir / "Budget.yfull"
+        with open(budget_yfull, 'w') as f:
+            json.dump({
+                "accounts": [],
+                "payees": [],
+                "transactions": []
+            }, f)
+        
+        return YnabParser(budget_dir)
+    
+    def test_consolidated_version_parsing_now_gives_correct_sort_order(self, parser_with_mock_device_manager):
+        """Test that consolidated version parsing now gives correct sort order for composite versions.
+        
+        After consolidation, the parser uses DeviceManager methods to correctly identify
+        the latest version from composite strings for proper delta file ordering.
+        """
+        parser = parser_with_mock_device_manager
+        
+        # Create delta files where we need correct sort order based on true latest versions
+        delta_path_1 = Path("A-1,B-9999_A-2,B-10000.ydiff")  # B-9999 is the real latest
+        delta_path_2 = Path("A-5000,B-50_A-5001,B-51.ydiff")  # A-5000 is the real latest
+        
+        # After consolidation, implementation uses DeviceManager methods
+        sort_key_1 = parser._get_delta_sort_key(delta_path_1)  # Returns 9999 (from B-9999)
+        sort_key_2 = parser._get_delta_sort_key(delta_path_2)  # Returns 5000 (from A-5000)
+        
+        # The CORRECT order is now achieved: delta_path_2 first (5000), then delta_path_1 (9999)
+        assert sort_key_2 < sort_key_1  # This is now the CORRECT order
+        
+        # Verify the actual version numbers being used
+        assert sort_key_1 == 9999  # Latest from B-9999
+        assert sort_key_2 == 5000  # Latest from A-5000
+    
+    def test_consolidated_entity_version_comparison_now_uses_true_latest(self, parser_with_mock_device_manager):
+        """Test that consolidated entity version comparison now uses true latest version from composite strings.
+        
+        After consolidation, when comparing entity versions like 'A-1,B-9999' vs 'A-5000,B-50',
+        the logic correctly compares B-9999 (9999) vs A-5000 (5000) using DeviceManager methods.
+        """
+        parser = parser_with_mock_device_manager
+        parser.parse()
+        
+        # Create mock delta data 
+        mock_delta_data = {
+            "items": [
+                {
+                    "entityId": "TEST-ENTITY-ID",
+                    "entityType": "transaction",
+                    "isTombstone": False,
+                    "entityVersion": "A-1,B-9999,C-100",  # B-9999 is the actual latest
+                    "accountId": "test-account",
+                    "amount": 100.0,
+                    "date": "2025-01-01",
+                    "cleared": "Uncleared",
+                    "accepted": True
+                }
+            ]
+        }
+        
+        # Add existing entity with composite version
+        from ynab_io.models import Transaction
+        existing_transaction = Transaction(
+            entityId="TEST-ENTITY-ID",
+            accountId="test-account",
+            amount=50.0,
+            date="2025-01-01",
+            cleared="Uncleared",
+            accepted=True,
+            entityVersion="A-5000,B-50,C-75"  # A-5000 is highest in first component but not overall
+        )
+        parser.transactions["TEST-ENTITY-ID"] = existing_transaction
+        
+        # After consolidation, the logic compares B-9999 (9999) vs A-5000 (5000)
+        # and recognizes that the new version (9999) should win
+        
+        # Apply the delta - consolidated logic should update to the new entity
+        with patch('builtins.open', mock_open(read_data=json.dumps(mock_delta_data))):
+            parser._apply_delta(Path("test_composite.ydiff"))
+        
+        # Check what happened - should have updated to the new amount
+        updated_transaction = parser.transactions["TEST-ENTITY-ID"]
+        
+        # Consolidated implementation should have updated to new version (100.0) because 9999 > 5000
+        assert updated_transaction.amount == 100.0  # New amount - CORRECT behavior after consolidation
+        assert updated_transaction.entityVersion == "A-1,B-9999,C-100"  # New version string
+    
+    def test_consolidated_version_parsing_gives_correct_sort_order(self, parser_with_mock_device_manager):
+        """Test that consolidated version parsing using DeviceManager gives correct sort order.
+        
+        This test will FAIL until we consolidate parser to use DeviceManager's version parsing methods.
+        """
+        parser = parser_with_mock_device_manager
+        
+        # Create delta files where we want the correct sort order based on true latest versions
+        delta_path_1 = Path("A-1,B-9999_A-2,B-10000.ydiff")  # B-9999 should be recognized as latest
+        delta_path_2 = Path("A-5000,B-50_A-5001,B-51.ydiff")  # A-5000 should be recognized as latest
+        
+        # After consolidation, the sort keys should be based on the true latest versions
+        sort_key_1 = parser._get_delta_sort_key(delta_path_1)  # Should return 9999 (from B-9999)
+        sort_key_2 = parser._get_delta_sort_key(delta_path_2)  # Should return 5000 (from A-5000)
+        
+        # The CORRECT order should be: delta_path_2 first (5000), then delta_path_1 (9999)
+        assert sort_key_2 < sort_key_1  # This should be TRUE after consolidation
+    
+    def test_consolidated_entity_version_comparison_uses_true_latest(self, parser_with_mock_device_manager):
+        """Test that consolidated version comparison uses true latest version from composite strings.
+        
+        This test will FAIL until we consolidate parser to use DeviceManager's version parsing methods.
+        """
+        parser = parser_with_mock_device_manager
+        parser.parse()
+        
+        # Create mock delta data 
+        mock_delta_data = {
+            "items": [
+                {
+                    "entityId": "TEST-ENTITY-ID",
+                    "entityType": "transaction",
+                    "isTombstone": False,
+                    "entityVersion": "A-1,B-9999,C-100",  # B-9999 is the actual latest
+                    "accountId": "test-account",
+                    "amount": 100.0,
+                    "date": "2025-01-01",
+                    "cleared": "Uncleared",
+                    "accepted": True
+                }
+            ]
+        }
+        
+        # Add existing entity with composite version
+        from ynab_io.models import Transaction
+        existing_transaction = Transaction(
+            entityId="TEST-ENTITY-ID",
+            accountId="test-account",
+            amount=50.0,
+            date="2025-01-01",
+            cleared="Uncleared",
+            accepted=True,
+            entityVersion="A-5000,B-50,C-75"  # A-5000 is highest in first component but not overall
+        )
+        parser.transactions["TEST-ENTITY-ID"] = existing_transaction
+        
+        # After consolidation, the logic should compare B-9999 (9999) vs A-5000 (5000)
+        # and recognize that the new version (9999) should win
+        
+        # Apply the delta - consolidated logic should update to the new entity
+        with patch('builtins.open', mock_open(read_data=json.dumps(mock_delta_data))):
+            parser._apply_delta(Path("test_composite.ydiff"))
+        
+        # Check what happened - should have updated to the new amount
+        updated_transaction = parser.transactions["TEST-ENTITY-ID"]
+        
+        # Consolidated implementation should have updated to new version (100.0) because 9999 > 5000
+        assert updated_transaction.amount == 100.0  # New amount - CORRECT behavior after consolidation
+    
+    def test_parse_delta_versions_handles_composite_version_filenames(self, parser_with_mock_device_manager):
+        """Test that _parse_delta_versions correctly parses filenames with composite versions."""
+        parser = parser_with_mock_device_manager
+        
+        # Test composite version filename
+        start, end = parser._parse_delta_versions('A-10001,B-63,C-52_A-10002,B-63,C-53.ydiff')
+        assert start == 'A-10001,B-63,C-52'
+        assert end == 'A-10002,B-63,C-53'
+        
+        # Test longer composite version filename
+        start, end = parser._parse_delta_versions('A-10001,B-63,C-52,E-224,F-9_A-10002,B-64,C-52,E-225,F-10.ydiff')
+        assert start == 'A-10001,B-63,C-52,E-224,F-9'
+        assert end == 'A-10002,B-64,C-52,E-225,F-10'
+
+
 class TestYnabParserRobustPathDiscovery:
     """Test cases for robust multi-device path discovery functionality."""
     

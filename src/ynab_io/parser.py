@@ -59,7 +59,24 @@ class YnabParser:
 
     def _get_delta_sort_key(self, delta_path: Path) -> int:
         start_version, _ = self._parse_delta_versions(delta_path.name)
-        return int(start_version.split('-')[1])
+        return self._get_version_number_from_composite(start_version, f"delta file '{delta_path.name}'")
+
+    def _get_version_number_from_composite(self, composite_version: str, context: str) -> int:
+        """Extract the version number from a composite version string using DeviceManager methods.
+        
+        Args:
+            composite_version: Version string (e.g., 'A-100' or 'A-100,B-200,C-50')
+            context: Context string for error messages
+            
+        Returns:
+            The version number from the latest version in the composite string
+        """
+        try:
+            latest_version = self.device_manager.get_latest_version_from_composite(composite_version)
+            _, version_num = self.device_manager.parse_version_string(latest_version)
+            return version_num
+        except ValueError as e:
+            raise ValueError(f"Failed to parse version number from '{composite_version}' in {context}: {e}")
 
     def _parse_delta_versions(self, filename: str) -> tuple[str, str]:
         if not filename.endswith('.ydiff'):
@@ -99,9 +116,17 @@ class YnabParser:
 
             if entity_id in collection:
                 existing_entity = collection[entity_id]
-                existing_version = int(existing_entity.entityVersion.split('-')[1])
-                new_version = int(item['entityVersion'].split('-')[1])
-                if new_version > existing_version:
+                existing_version_num = self._get_version_number_from_composite(
+                    existing_entity.entityVersion, 
+                    f"existing {entity_type} '{entity_id}' in delta file '{delta_file.name}'"
+                )
+                
+                new_version_num = self._get_version_number_from_composite(
+                    item['entityVersion'],
+                    f"new {entity_type} '{entity_id}' in delta file '{delta_file.name}'"
+                )
+                    
+                if new_version_num > existing_version_num:
                     updated_data = existing_entity.model_dump()
                     updated_data.update(item)
                     collection[entity_id] = model(**updated_data)
