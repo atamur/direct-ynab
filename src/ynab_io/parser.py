@@ -3,7 +3,7 @@ import logging
 from pathlib import Path
 from typing import List, Dict
 
-from .models import Account, Payee, Transaction, Budget
+from .models import Account, Payee, Transaction, MasterCategory, Category, MonthlyBudget, ScheduledTransaction, Budget
 from .device_manager import DeviceManager
 
 class YnabParser:
@@ -21,6 +21,10 @@ class YnabParser:
         self.accounts: Dict[str, Account] = {}
         self.payees: Dict[str, Payee] = {}
         self.transactions: Dict[str, Transaction] = {}
+        self.master_categories: Dict[str, MasterCategory] = {}
+        self.categories: Dict[str, Category] = {}
+        self.monthly_budgets: Dict[str, MonthlyBudget] = {}
+        self.scheduled_transactions: Dict[str, ScheduledTransaction] = {}
 
     def parse(self) -> Budget:
         device_guid = self.device_manager.get_active_device_guid()
@@ -28,25 +32,60 @@ class YnabParser:
         with open(yfull_path, 'r') as f:
             data = json.load(f)
 
-        for account_data in data.get('accounts', []):
-            account = Account(**account_data)
-            self.accounts[account.entityId] = account
+        # Parse simple entities
+        self._parse_entities(data.get('accounts', []), Account, self.accounts)
+        self._parse_entities(data.get('payees', []), Payee, self.payees)
+        self._parse_entities(data.get('transactions', []), Transaction, self.transactions)
+        self._parse_entities(data.get('monthlyBudgets', []), MonthlyBudget, self.monthly_budgets)
+        self._parse_entities(data.get('scheduledTransactions', []), ScheduledTransaction, self.scheduled_transactions)
 
-        for payee_data in data.get('payees', []):
-            payee = Payee(**payee_data)
-            self.payees[payee.entityId] = payee
-
-        for transaction_data in data.get('transactions', []):
-            transaction = Transaction(**transaction_data)
-            self.transactions[transaction.entityId] = transaction
+        # Parse master categories with nested categories
+        self._parse_master_categories(data.get('masterCategories', []))
         
         self.apply_deltas()
         
         return Budget(
             accounts=list(self.accounts.values()),
             payees=list(self.payees.values()),
-            transactions=list(self.transactions.values())
+            transactions=list(self.transactions.values()),
+            master_categories=list(self.master_categories.values()),
+            categories=list(self.categories.values()),
+            monthly_budgets=list(self.monthly_budgets.values()),
+            scheduled_transactions=list(self.scheduled_transactions.values())
         )
+
+    def _parse_entities(self, entity_data_list, model_class, collection):
+        """Parse a list of entities into the specified collection."""
+        for entity_data in entity_data_list:
+            entity = model_class(**entity_data)
+            collection[entity.entityId] = entity
+
+    def _parse_master_categories(self, master_categories_data):
+        """Parse master categories and their nested subcategories."""
+        for master_category_data in master_categories_data:
+            # Extract and process nested categories first
+            if 'subCategories' in master_category_data:
+                for category_data in master_category_data['subCategories']:
+                    category = Category(**category_data)
+                    self.categories[category.entityId] = category
+            
+            # Create master category without subCategories to avoid circular reference
+            master_category_clean = {k: v for k, v in master_category_data.items() if k != 'subCategories'}
+            master_category = MasterCategory(**master_category_clean)
+            self.master_categories[master_category.entityId] = master_category
+
+    def _get_entity_mapping(self, entity_type):
+        """Get the collection and model class for a given entity type."""
+        entity_mappings = {
+            'account': (self.accounts, Account),
+            'payee': (self.payees, Payee),
+            'transaction': (self.transactions, Transaction),
+            'masterCategory': (self.master_categories, MasterCategory),
+            'category': (self.categories, Category),
+            'monthlyBudget': (self.monthly_budgets, MonthlyBudget),
+            'scheduledTransaction': (self.scheduled_transactions, ScheduledTransaction)
+        }
+        return entity_mappings.get(entity_type, (None, None))
 
     def apply_deltas(self):
         delta_files = self._discover_delta_files()
@@ -96,16 +135,9 @@ class YnabParser:
             entity_id = item['entityId']
             entity_type = item['entityType']
 
-            if entity_type == 'account':
-                collection = self.accounts
-                model = Account
-            elif entity_type == 'payee':
-                collection = self.payees
-                model = Payee
-            elif entity_type == 'transaction':
-                collection = self.transactions
-                model = Transaction
-            else:
+            # Get collection and model for entity type
+            collection, model = self._get_entity_mapping(entity_type)
+            if collection is None:
                 logging.warning(f"Unknown entity type '{entity_type}' encountered in delta file '{delta_file.name}'. Entity ID: {entity_id}. Available keys: {list(item.keys())}")
                 continue
 

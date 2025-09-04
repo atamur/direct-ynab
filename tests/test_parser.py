@@ -6,7 +6,7 @@ from pathlib import Path
 from unittest.mock import mock_open, patch
 
 from ynab_io.parser import YnabParser
-from ynab_io.models import Account, Payee, Transaction
+from ynab_io.models import Account, Payee, Transaction, MasterCategory, Category, MonthlyBudget, ScheduledTransaction
 
 
 class TestYnabParser:
@@ -39,6 +39,10 @@ class TestYnabParser:
         assert parser.accounts == {}
         assert parser.payees == {}
         assert parser.transactions == {}
+        assert parser.master_categories == {}
+        assert parser.categories == {}
+        assert parser.monthly_budgets == {}
+        assert parser.scheduled_transactions == {}
     
     def test_find_data_dir_missing_directory_raises_error(self, tmp_path):
         """Test that missing data directory raises FileNotFoundError."""
@@ -157,6 +161,78 @@ class TestYnabParser:
         assert hasattr(transaction, 'amount')
         assert hasattr(transaction, 'date')
         assert hasattr(transaction, 'entityVersion')
+    
+    def test_parse_creates_correct_master_category_models(self, parser):
+        """Test that parse() creates correct MasterCategory models."""
+        parser.parse()
+        
+        # Verify we have expected master categories (7 from fixture)
+        assert len(parser.master_categories) == 7
+        
+        # Test a sample master category
+        master_category = next(iter(parser.master_categories.values()))
+        
+        # Verify it's a MasterCategory model with expected fields
+        assert isinstance(master_category, MasterCategory)
+        assert hasattr(master_category, 'entityId')
+        assert hasattr(master_category, 'name')
+        assert hasattr(master_category, 'type')
+        assert hasattr(master_category, 'deleteable')
+        assert hasattr(master_category, 'expanded')
+        assert hasattr(master_category, 'entityVersion')
+    
+    def test_parse_creates_correct_category_models(self, parser):
+        """Test that parse() creates correct Category models."""
+        parser.parse()
+        
+        # Verify we have expected categories (29 from fixture)
+        assert len(parser.categories) == 29
+        
+        # Test a sample category
+        category = next(iter(parser.categories.values()))
+        
+        # Verify it's a Category model with expected fields
+        assert isinstance(category, Category)
+        assert hasattr(category, 'entityId')
+        assert hasattr(category, 'name')
+        assert hasattr(category, 'type')
+        assert hasattr(category, 'masterCategoryId')
+        assert hasattr(category, 'entityVersion')
+    
+    def test_parse_creates_correct_monthly_budget_models(self, parser):
+        """Test that parse() creates correct MonthlyBudget models."""
+        parser.parse()
+        
+        # Verify we have expected monthly budgets (27 from fixture)
+        assert len(parser.monthly_budgets) == 27
+        
+        # Test a sample monthly budget
+        monthly_budget = next(iter(parser.monthly_budgets.values()))
+        
+        # Verify it's a MonthlyBudget model with expected fields
+        assert isinstance(monthly_budget, MonthlyBudget)
+        assert hasattr(monthly_budget, 'entityId')
+        assert hasattr(monthly_budget, 'month')
+        assert hasattr(monthly_budget, 'entityVersion')
+    
+    def test_parse_creates_correct_scheduled_transaction_models(self, parser):
+        """Test that parse() creates correct ScheduledTransaction models."""
+        parser.parse()
+        
+        # Verify we have expected scheduled transactions (checking fixture data)
+        # Note: We need to check if there are scheduledTransactions in the fixture
+        scheduled_transaction_count = len(parser.scheduled_transactions)
+        
+        # If we have scheduled transactions, test their structure
+        if scheduled_transaction_count > 0:
+            scheduled_transaction = next(iter(parser.scheduled_transactions.values()))
+            
+            # Verify it's a ScheduledTransaction model with expected fields
+            assert isinstance(scheduled_transaction, ScheduledTransaction)
+            assert hasattr(scheduled_transaction, 'entityId')
+            assert hasattr(scheduled_transaction, 'frequency')
+            assert hasattr(scheduled_transaction, 'amount')
+            assert hasattr(scheduled_transaction, 'entityVersion')
     
     def test_parse_missing_budget_yfull_raises_error(self, tmp_path):
         """Test that missing Budget.yfull file raises FileNotFoundError."""
@@ -309,13 +385,132 @@ class TestYnabParser:
         # The entity should be removed
         assert "TEST-ENTITY" not in parser.transactions
     
+    def test_apply_delta_handles_master_category_processing(self, parser):
+        """Test that _apply_delta correctly processes master category changes."""
+        parser.parse()
+        initial_master_category_count = len(parser.master_categories)
+        
+        # Create a mock delta with master category update
+        mock_delta = {
+            "items": [
+                {
+                    "entityId": "TEST-MASTER-CAT",
+                    "entityType": "masterCategory",
+                    "isTombstone": False,
+                    "entityVersion": "A-999",
+                    "name": "Test Master Category",
+                    "type": "OUTFLOW",
+                    "deleteable": True,
+                    "expanded": True,
+                    "sortableIndex": 0
+                }
+            ]
+        }
+        
+        # Apply the mock delta
+        with patch('builtins.open', mock_open(read_data=json.dumps(mock_delta))):
+            parser._apply_delta(Path("test.ydiff"))
+        
+        # Should have added the new master category
+        assert len(parser.master_categories) == initial_master_category_count + 1
+        assert "TEST-MASTER-CAT" in parser.master_categories
+    
+    def test_apply_delta_handles_category_processing(self, parser):
+        """Test that _apply_delta correctly processes category changes."""
+        parser.parse()
+        initial_category_count = len(parser.categories)
+        
+        # Create a mock delta with category update
+        mock_delta = {
+            "items": [
+                {
+                    "entityId": "TEST-CATEGORY",
+                    "entityType": "category",
+                    "isTombstone": False,
+                    "entityVersion": "A-999",
+                    "name": "Test Category",
+                    "type": "OUTFLOW",
+                    "masterCategoryId": "A4",
+                    "sortableIndex": 0
+                }
+            ]
+        }
+        
+        # Apply the mock delta
+        with patch('builtins.open', mock_open(read_data=json.dumps(mock_delta))):
+            parser._apply_delta(Path("test.ydiff"))
+        
+        # Should have added the new category
+        assert len(parser.categories) == initial_category_count + 1
+        assert "TEST-CATEGORY" in parser.categories
+    
+    def test_apply_delta_handles_monthly_budget_processing(self, parser):
+        """Test that _apply_delta correctly processes monthly budget changes."""
+        parser.parse()
+        initial_monthly_budget_count = len(parser.monthly_budgets)
+        
+        # Create a mock delta with monthly budget update
+        mock_delta = {
+            "items": [
+                {
+                    "entityId": "TEST-MB",
+                    "entityType": "monthlyBudget",
+                    "isTombstone": False,
+                    "entityVersion": "A-999",
+                    "month": "2025-12-01"
+                }
+            ]
+        }
+        
+        # Apply the mock delta
+        with patch('builtins.open', mock_open(read_data=json.dumps(mock_delta))):
+            parser._apply_delta(Path("test.ydiff"))
+        
+        # Should have added the new monthly budget
+        assert len(parser.monthly_budgets) == initial_monthly_budget_count + 1
+        assert "TEST-MB" in parser.monthly_budgets
+    
+    def test_apply_delta_handles_scheduled_transaction_processing(self, parser):
+        """Test that _apply_delta correctly processes scheduled transaction changes."""
+        parser.parse()
+        initial_scheduled_transaction_count = len(parser.scheduled_transactions)
+        
+        # Create a mock delta with scheduled transaction update
+        mock_delta = {
+            "items": [
+                {
+                    "entityId": "TEST-SCHEDULED",
+                    "entityType": "scheduledTransaction",
+                    "isTombstone": False,
+                    "entityVersion": "A-999",
+                    "frequency": "Monthly",
+                    "amount": 100.0,
+                    "payeeId": "TEST-PAYEE",
+                    "accountId": "TEST-ACCOUNT",
+                    "date": "2025-01-01"
+                }
+            ]
+        }
+        
+        # Apply the mock delta
+        with patch('builtins.open', mock_open(read_data=json.dumps(mock_delta))):
+            parser._apply_delta(Path("test.ydiff"))
+        
+        # Should have added the new scheduled transaction
+        assert len(parser.scheduled_transactions) == initial_scheduled_transaction_count + 1
+        assert "TEST-SCHEDULED" in parser.scheduled_transactions
+    
     def test_apply_delta_ignores_unknown_entity_types(self, parser):
         """Test that _apply_delta ignores unknown entity types with warning."""
         parser.parse()
         initial_state = {
             'accounts': dict(parser.accounts),
             'payees': dict(parser.payees),
-            'transactions': dict(parser.transactions)
+            'transactions': dict(parser.transactions),
+            'master_categories': dict(parser.master_categories),
+            'categories': dict(parser.categories),
+            'monthly_budgets': dict(parser.monthly_budgets),
+            'scheduled_transactions': dict(parser.scheduled_transactions)
         }
         
         # Create a mock delta with unknown entity type
@@ -341,6 +536,10 @@ class TestYnabParser:
         assert parser.accounts == initial_state['accounts']
         assert parser.payees == initial_state['payees']
         assert parser.transactions == initial_state['transactions']
+        assert parser.master_categories == initial_state['master_categories']
+        assert parser.categories == initial_state['categories']
+        assert parser.monthly_budgets == initial_state['monthly_budgets']
+        assert parser.scheduled_transactions == initial_state['scheduled_transactions']
     
     def test_full_parse_and_delta_application_workflow(self, parser):
         """Test complete workflow: parse Budget.yfull then apply all deltas."""
@@ -352,6 +551,9 @@ class TestYnabParser:
         assert len(parser.accounts) == 1  # Expected from fixture
         assert len(parser.payees) == 4    # Expected from fixture
         assert len(parser.transactions) == 3  # Fixture has exactly 3 transactions
+        assert len(parser.master_categories) == 7  # Expected from fixture
+        assert len(parser.categories) == 29  # Expected from fixture
+        assert len(parser.monthly_budgets) == 27  # Expected from fixture
         
         # Verify all entities are proper model instances
         for account in parser.accounts.values():
@@ -362,6 +564,15 @@ class TestYnabParser:
         
         for transaction in parser.transactions.values():
             assert isinstance(transaction, Transaction)
+            
+        for master_category in parser.master_categories.values():
+            assert isinstance(master_category, MasterCategory)
+            
+        for category in parser.categories.values():
+            assert isinstance(category, Category)
+            
+        for monthly_budget in parser.monthly_budgets.values():
+            assert isinstance(monthly_budget, MonthlyBudget)
     
     def test_final_state_after_applying_deltas_is_accurate(self, parser):
         """Test that final state after applying deltas matches expected values."""
@@ -382,6 +593,15 @@ class TestYnabParser:
         
         # Should have exactly 3 transactions (as per fixture data)
         assert len(parser.transactions) == 3
+        
+        # Should have exactly 7 master categories (as per fixture data)
+        assert len(parser.master_categories) == 7
+        
+        # Should have exactly 29 categories (as per fixture data)
+        assert len(parser.categories) == 29
+        
+        # Should have exactly 27 monthly budgets (as per fixture data)
+        assert len(parser.monthly_budgets) == 27
         
         # Verify version numbers are up to date (should reflect latest delta A-72)
         latest_versions = set()
