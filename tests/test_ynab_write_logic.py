@@ -448,14 +448,12 @@ class TestYdiffFileGeneration:
             entityVersion="A-87"
         )
         
-        # Mock get_device_directory to return the correct path
-        with patch.object(writer, '_get_device_directory', return_value=device_dir):
-            with patch.object(writer, '_get_ydevice_file_path', return_value=ydevice_path):
-                # Execute write operation
-                result = writer.write_changes(
-                    entities={"transactions": [new_transaction]},
-                    current_knowledge="A-86"
-                )
+        # Execute write operation using short_id
+        result = writer.write_changes(
+            entities={"transactions": [new_transaction]},
+            current_knowledge="A-86",
+            short_id="A"
+        )
 
         # Should return success with new version info
         assert result["success"] is True
@@ -739,7 +737,8 @@ class TestIntegratedWriteWorkflow:
         # Execute complete write workflow
         result = writer.write_changes(
             entities={"transactions": [new_transaction]},
-            current_knowledge="A-86"
+            current_knowledge="A-86",
+            short_id="A"
         )
         
         # Should return success with new version info
@@ -778,7 +777,8 @@ class TestIntegratedWriteWorkflow:
         # Try to write without proper setup
         result = writer.write_changes(
             entities={},
-            current_knowledge="A-86"
+            current_knowledge="A-86",
+            short_id="A"
         )
         
         # Should fail gracefully

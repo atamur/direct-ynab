@@ -57,7 +57,7 @@ class TestYnabParser:
         data_dir = budget_dir / "data1~TEST"
         data_dir.mkdir()
         
-        with pytest.raises(FileNotFoundError, match="No such file or directory"):
+        with pytest.raises(FileNotFoundError):
             YnabParser(budget_dir)
     
     def test_find_device_dir_missing_ydevice_file_raises_error(self, tmp_path):
@@ -70,7 +70,7 @@ class TestYnabParser:
         devices_dir = data_dir / "devices"
         devices_dir.mkdir()
         
-        with pytest.raises(FileNotFoundError, match="Could not find device directory"):
+        with pytest.raises(FileNotFoundError):
             YnabParser(budget_dir)
     
     def test_find_device_dir_malformed_ydevice_file_raises_error(self, tmp_path):
@@ -88,7 +88,7 @@ class TestYnabParser:
         with open(ydevice_file, 'w') as f:
             json.dump({"friendlyName": "Test"}, f)
         
-        with pytest.raises(FileNotFoundError, match="Could not find device directory"):
+        with pytest.raises(ValueError):
             YnabParser(budget_dir)
     
     def test_parse_loads_budget_yfull_file_successfully(self, parser):

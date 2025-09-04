@@ -36,6 +36,70 @@ class DeviceManager:
         """
         self.budget_dir = budget_dir
         self.create_backups = create_backups
+
+    def _get_data_dir(self) -> Path:
+        if not self.budget_dir:
+            raise ValueError("Budget directory not set")
+        for p in self.budget_dir.iterdir():
+            if p.is_dir() and p.name.startswith('data1~'):
+                return p
+        raise FileNotFoundError("Could not find data directory in budget")
+
+    def _get_devices_dir(self) -> Path:
+        data_dir = self._get_data_dir()
+        devices_dir = data_dir / "devices"
+        if not devices_dir.exists():
+            raise FileNotFoundError("Could not find devices directory")
+        return devices_dir
+
+    def _get_ydevice_file_path(self, short_id: str) -> Path:
+        devices_dir = self._get_devices_dir()
+        ydevice_path = devices_dir / f"{short_id}.ydevice"
+        if not ydevice_path.exists():
+            raise FileNotFoundError(f"Could not find .ydevice file for short_id {short_id}")
+        return ydevice_path
+
+    def get_ydevice_file_path(self, short_id: str) -> Path:
+        """Get path to .ydevice file for given short ID.
+        
+        Args:
+            short_id: Short device ID
+            
+        Returns:
+            Path to the .ydevice file
+        """
+        return self._get_ydevice_file_path(short_id)
+
+    def get_device_guid(self, short_id: str) -> str:
+        ydevice_path = self._get_ydevice_file_path(short_id)
+        with open(ydevice_path, 'r') as f:
+            device_data = json.load(f)
+        device_guid = device_data.get('deviceGUID')
+        if not device_guid:
+            raise ValueError(f"deviceGUID not found in {ydevice_path}")
+        return device_guid
+
+    def get_active_device_guid(self) -> str:
+        """Get active device GUID. Currently returns first available device.
+        
+        Returns:
+            Device GUID of the active device
+        """
+        devices_dir = self._get_devices_dir()
+        for p in devices_dir.iterdir():
+            if p.is_file() and p.suffix == '.ydevice':
+                return self.get_device_guid(p.stem)
+        raise FileNotFoundError("Could not find any .ydevice file")
+
+    def get_data_dir_path(self) -> Path:
+        return self._get_data_dir()
+
+    def get_device_dir_path(self, device_guid: str) -> Path:
+        data_dir = self._get_data_dir()
+        device_dir = data_dir / device_guid
+        if not device_dir.exists():
+            raise FileNotFoundError(f"Could not find device directory for GUID {device_guid}")
+        return device_dir
     
     def generate_device_guid(self) -> str:
         """Generate a unique device GUID.
@@ -137,17 +201,7 @@ class DeviceManager:
         Returns:
             Dictionary with device information (deviceGUID, shortDeviceId)
         """
-        if not self.budget_dir:
-            raise ValueError("Budget directory not set")
-        
-        # Find data directory
-        data_dirs = list(self.budget_dir.glob("data1~*"))
-        if not data_dirs:
-            raise FileNotFoundError("Could not find data directory in budget")
-        
-        data_dir = data_dirs[0]
-        devices_dir = data_dir / "devices"
-        
+        devices_dir = self._get_devices_dir()
         if not devices_dir.exists():
             devices_dir.mkdir(parents=True)
         
@@ -162,6 +216,7 @@ class DeviceManager:
         short_id = self.assign_next_short_id(existing_ids)
         
         # Create device directory
+        data_dir = self._get_data_dir()
         device_dir = data_dir / device_guid
         device_dir.mkdir(exist_ok=True)
         
@@ -271,17 +326,9 @@ class DeviceManager:
         Returns:
             Latest knowledge version string or None if no devices found
         """
-        if not self.budget_dir:
-            raise ValueError("Budget directory not set")
-
-        data_dirs = list(self.budget_dir.glob("data1~*"))
-        if not data_dirs:
-            return None
-
-        data_dir = data_dirs[0]
-        devices_dir = data_dir / "devices"
-
-        if not devices_dir.exists():
+        try:
+            devices_dir = self._get_devices_dir()
+        except FileNotFoundError:
             return None
 
         all_knowledges = []

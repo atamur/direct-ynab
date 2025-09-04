@@ -21,7 +21,7 @@ from .device_manager import DeviceManager
 # Constants for YNAB4 .ydiff files
 DEFAULT_DATA_VERSION = "4.2"
 YDIFF_EXTENSION = ".ydiff"
-YDIFF_FILENAME_PATTERN = re.compile(r'^([A-Z]-\d+)_([A-Z]-\d+)\.ydiff$')
+YDIFF_FILENAME_PATTERN = re.compile(r'^([A-Z]-\d+)_([A-Z]-\d+)\.ydiff')
 
 
 class YnabWriter:
@@ -239,12 +239,13 @@ class YnabWriter:
         except ValueError:
             return False
     
-    def write_changes(self, entities: Dict[str, List], current_knowledge: str) -> Dict[str, Any]:
+    def write_changes(self, entities: Dict[str, List], current_knowledge: str, short_id: str) -> Dict[str, Any]:
         """Write entity changes to .ydiff file and update .ydevice.
         
         Args:
             entities: Dictionary with entity changes
             current_knowledge: Current knowledge version
+            short_id: The short id of the device
         
         Returns:
             Dictionary with result information
@@ -252,15 +253,16 @@ class YnabWriter:
         if not self.device_manager:
             return {"success": False, "error": "DeviceManager not available"}
         
-        if not self.device_manager.budget_dir:
-            return {"success": False, "error": "Could not find budget directory"}
-        
         try:
             # Determine new version
             new_version = self.device_manager.increment_version(current_knowledge)
             
+            device_guid = self.device_manager.get_device_guid(short_id)
             # Find device info from existing .ydevice files
-            device_info = self._get_device_info()
+            device_info = {
+                "shortDeviceId": short_id,
+                "deviceGUID": device_guid
+            }
             
             # Generate .ydiff content
             ydiff_content = self.generate_ydiff(
@@ -274,13 +276,13 @@ class YnabWriter:
             ydiff_filename = self.generate_ydiff_filename(current_knowledge, new_version)
             
             # Write .ydiff file
-            device_dir = self._get_device_directory()
+            device_dir = self.device_manager.get_device_dir_path(device_guid)
             ydiff_path = device_dir / ydiff_filename
             with open(ydiff_path, 'w') as f:
                 f.write(ydiff_content)
             
             # Update .ydevice file
-            ydevice_path = self._get_ydevice_file_path()
+            ydevice_path = self.device_manager.get_ydevice_file_path(short_id)
             self.device_manager.update_device_knowledge(
                 ydevice_path=ydevice_path,
                 new_knowledge=new_version
@@ -294,41 +296,3 @@ class YnabWriter:
             
         except (FileNotFoundError, ValueError, IOError) as e:
             return {"success": False, "error": str(e)}
-    
-    def _get_device_info(self) -> Dict[str, str]:
-        """Get device information from existing .ydevice files."""
-        ydevice_path = self._get_ydevice_file_path()
-        
-        with open(ydevice_path, 'r') as f:
-            ydevice_data = json.load(f)
-        
-        return {
-            "shortDeviceId": ydevice_data["shortDeviceId"],
-            "deviceGUID": ydevice_data["deviceGUID"]
-        }
-    
-    def _get_device_directory(self) -> Path:
-        """Get device directory for writing .ydiff files."""
-        data_dirs = list(self.device_manager.budget_dir.glob("data1~*"))
-        if not data_dirs:
-            raise FileNotFoundError("Could not find data directory")
-        
-        device_dirs = list(data_dirs[0].glob("*"))
-        device_dirs = [d for d in device_dirs if d.is_dir() and d.name != "devices"]
-        if not device_dirs:
-            raise FileNotFoundError("Could not find device directory")
-        
-        return device_dirs[0]
-    
-    def _get_ydevice_file_path(self) -> Path:
-        """Get path to .ydevice file."""
-        data_dirs = list(self.device_manager.budget_dir.glob("data1~*"))
-        if not data_dirs:
-            raise FileNotFoundError("Could not find data directory")
-        
-        devices_dir = data_dirs[0] / "devices"
-        ydevice_files = list(devices_dir.glob("*.ydevice"))
-        if not ydevice_files:
-            raise FileNotFoundError("Could not find .ydevice file")
-        
-        return ydevice_files[0]

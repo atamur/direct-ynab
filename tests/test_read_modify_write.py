@@ -3,7 +3,6 @@
 import json
 from pathlib import Path
 import shutil
-from unittest.mock import patch
 
 from ynab_io.parser import YnabParser
 from ynab_io.writer import YnabWriter
@@ -31,21 +30,19 @@ def test_read_modify_write_cycle(tmp_path):
     
     global_knowledge = device_manager.get_global_knowledge()
     
-    # Get the device guid for the current device
-    ydevice_path = list((budget_dir / "data1~F5FF7453" / "devices").glob("*.ydevice"))[0]
-    with open(ydevice_path, 'r') as f:
-        device_data = json.load(f)
-    device_guid = device_data["deviceGUID"]
+    # Get the short_id for the current device
+    devices_dir = device_manager._get_devices_dir()
+    ydevice_path = list(devices_dir.glob("*.ydevice"))[0]
+    short_id = ydevice_path.stem
     
     new_version = device_manager.increment_version(global_knowledge)
     transaction_to_modify.entityVersion = new_version
 
-    with patch.object(writer, '_get_device_directory', return_value=budget_dir / "data1~F5FF7453" / device_guid):
-        with patch.object(writer, '_get_ydevice_file_path', return_value=ydevice_path):
-            result = writer.write_changes(
-                entities={"transactions": [transaction_to_modify]},
-                current_knowledge=global_knowledge
-            )
+    result = writer.write_changes(
+        entities={"transactions": [transaction_to_modify]},
+        current_knowledge=global_knowledge,
+        short_id=short_id
+    )
     
     assert result["success"] is True
 

@@ -4,35 +4,23 @@ from pathlib import Path
 from typing import List, Dict
 
 from .models import Account, Payee, Transaction, Budget
+from .device_manager import DeviceManager
 
 class YnabParser:
     def __init__(self, budget_path: Path):
         self.budget_path = budget_path
-        self.data_dir = self._find_data_dir()
-        self.device_dir = self._find_device_dir()
+        try:
+            self.device_manager = DeviceManager(budget_path)
+            self.data_dir = self.device_manager.get_data_dir_path()
+            device_guid = self.device_manager.get_active_device_guid()
+            self.device_dir = self.device_manager.get_device_dir_path(device_guid)
+        except FileNotFoundError as e:
+            raise FileNotFoundError(f"Invalid YNAB4 budget structure: {e}")
+        except ValueError as e:
+            raise ValueError(f"Corrupted YNAB4 budget data: {e}")
         self.accounts: Dict[str, Account] = {}
         self.payees: Dict[str, Payee] = {}
         self.transactions: Dict[str, Transaction] = {}
-
-    def _find_data_dir(self) -> Path:
-        for p in self.budget_path.iterdir():
-            if p.is_dir() and p.name.startswith('data1~'):
-                return p
-        raise FileNotFoundError("Could not find data directory in budget")
-
-    def _find_device_dir(self) -> Path:
-        devices_dir = self.data_dir / 'devices'
-        # For now, we assume there's only one device. A more robust implementation
-        # might need to handle multiple devices.
-        for p in devices_dir.iterdir():
-            if p.is_file() and p.suffix == '.ydevice':
-                # Read the .ydevice file to get the deviceGUID
-                with open(p, 'r') as f:
-                    device_data = json.load(f)
-                device_guid = device_data.get('deviceGUID')
-                if device_guid:
-                    return self.data_dir / device_guid
-        raise FileNotFoundError("Could not find device directory")
 
     def parse(self) -> Budget:
         yfull_path = self.device_dir / 'Budget.yfull'
