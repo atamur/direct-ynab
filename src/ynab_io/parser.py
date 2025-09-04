@@ -3,7 +3,7 @@ import logging
 from pathlib import Path
 from typing import List, Dict
 
-from .models import Account, Payee, Transaction
+from .models import Account, Payee, Transaction, Budget
 
 class YnabParser:
     def __init__(self, budget_path: Path):
@@ -34,7 +34,7 @@ class YnabParser:
                     return self.data_dir / device_guid
         raise FileNotFoundError("Could not find device directory")
 
-    def parse(self):
+    def parse(self) -> Budget:
         yfull_path = self.device_dir / 'Budget.yfull'
         with open(yfull_path, 'r') as f:
             data = json.load(f)
@@ -50,6 +50,14 @@ class YnabParser:
         for transaction_data in data.get('transactions', []):
             transaction = Transaction(**transaction_data)
             self.transactions[transaction.entityId] = transaction
+        
+        self.apply_deltas()
+        
+        return Budget(
+            accounts=list(self.accounts.values()),
+            payees=list(self.payees.values()),
+            transactions=list(self.transactions.values())
+        )
 
     def apply_deltas(self):
         delta_files = self._discover_delta_files()
@@ -105,7 +113,7 @@ class YnabParser:
                 existing_version = int(existing_entity.entityVersion.split('-')[1])
                 new_version = int(item['entityVersion'].split('-')[1])
                 if new_version > existing_version:
-                    updated_data = existing_entity.dict()
+                    updated_data = existing_entity.model_dump()
                     updated_data.update(item)
                     collection[entity_id] = model(**updated_data)
             else:

@@ -264,6 +264,42 @@ class DeviceManager:
             return (version_num, device_id)
         
         return max(versions, key=version_sort_key)
+
+    def get_global_knowledge(self) -> Optional[str]:
+        """Calculate global knowledge from all .ydevice files.
+
+        Returns:
+            Latest knowledge version string or None if no devices found
+        """
+        if not self.budget_dir:
+            raise ValueError("Budget directory not set")
+
+        data_dirs = list(self.budget_dir.glob("data1~*"))
+        if not data_dirs:
+            return None
+
+        data_dir = data_dirs[0]
+        devices_dir = data_dir / "devices"
+
+        if not devices_dir.exists():
+            return None
+
+        all_knowledges = []
+        for ydevice_file in devices_dir.glob("*.ydevice"):
+            try:
+                with open(ydevice_file, 'r') as f:
+                    ydevice_data = json.load(f)
+                
+                if "knowledge" in ydevice_data:
+                    all_knowledges.append(ydevice_data["knowledge"])
+            except (json.JSONDecodeError, IOError):
+                # Ignore corrupted or unreadable files
+                continue
+        
+        if not all_knowledges:
+            return None
+            
+        return self.get_latest_version(all_knowledges)
     
     def update_device_knowledge(self, ydevice_path: Path, new_knowledge: str,
                               new_full_budget_knowledge: Optional[str] = None) -> None:

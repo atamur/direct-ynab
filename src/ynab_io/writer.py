@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Dict, Any, List, Optional, Union, Tuple
 from datetime import datetime
 
-from .models import Account, Payee, Transaction
+from .models import Account, Payee, Transaction, Budget
 from .device_manager import DeviceManager
 
 
@@ -109,13 +109,16 @@ class YnabWriter:
     
     def _serialize_transaction(self, transaction: Transaction) -> Dict[str, Any]:
         """Serialize transaction entity to .ydiff format."""
-        return {
+        data = {
             "accountId": transaction.accountId,
             "date": transaction.date,
             "amount": transaction.amount,
             "cleared": transaction.cleared,
             "accepted": transaction.accepted
         }
+        if transaction.memo is not None:
+            data["memo"] = transaction.memo
+        return data
     
     def _serialize_account(self, account: Account) -> Dict[str, Any]:
         """Serialize account entity to .ydiff format."""

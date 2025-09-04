@@ -216,6 +216,54 @@ class TestKnowledgeVersionTracking:
         assert latest == "A-87"
 
 
+    def test_get_global_knowledge_from_all_devices(self, tmp_path):
+        """Test calculating global knowledge from all .ydevice files."""
+        from ynab_io.device_manager import DeviceManager
+
+        # Setup test environment
+        budget_dir = tmp_path / "budget"
+        data_dir = budget_dir / "data1~TEST"
+        devices_dir = data_dir / "devices"
+        devices_dir.mkdir(parents=True)
+
+        # Create multiple .ydevice files with different knowledge
+        ydevice_a_data = {
+            "deviceGUID": "GUID-A", "shortDeviceId": "A", "knowledge": "A-86"
+        }
+        ydevice_b_data = {
+            "deviceGUID": "GUID-B", "shortDeviceId": "B", "knowledge": "B-15"
+        }
+        ydevice_c_data = {
+            "deviceGUID": "GUID-C", "shortDeviceId": "C", "knowledge": "A-89"  # Higher version on different device
+        }
+
+        with open(devices_dir / "A.ydevice", 'w') as f:
+            json.dump(ydevice_a_data, f)
+        with open(devices_dir / "B.ydevice", 'w') as f:
+            json.dump(ydevice_b_data, f)
+        with open(devices_dir / "C.ydevice", 'w') as f:
+            json.dump(ydevice_c_data, f)
+
+        device_manager = DeviceManager(budget_dir=budget_dir)
+        global_knowledge = device_manager.get_global_knowledge()
+
+        assert global_knowledge == "A-89"
+
+    def test_get_global_knowledge_no_devices(self, tmp_path):
+        """Test get_global_knowledge returns None when no devices exist."""
+        from ynab_io.device_manager import DeviceManager
+
+        budget_dir = tmp_path / "budget"
+        data_dir = budget_dir / "data1~TEST"
+        devices_dir = data_dir / "devices"
+        devices_dir.mkdir(parents=True)
+
+        device_manager = DeviceManager(budget_dir=budget_dir)
+        global_knowledge = device_manager.get_global_knowledge()
+
+        assert global_knowledge is None
+
+
 class TestYdiffFileGeneration:
     """Test .ydiff file generation mechanisms."""
     
@@ -357,6 +405,81 @@ class TestYdiffFileGeneration:
         assert item1["entityType"] == "transaction"
         assert item1["entityId"] == "TRANS-1"
         assert item1["amount"] == 100.0
+
+    def test_write_ydiff_and_update_ydevice(self, tmp_path):
+        """Test writing a .ydiff file and updating the .ydevice file."""
+        from ynab_io.writer import YnabWriter
+        from ynab_io.device_manager import DeviceManager
+        from ynab_io.models import Transaction
+
+        # Setup test environment
+        budget_dir = tmp_path / "budget"
+        data_dir = budget_dir / "data1~TEST"
+        device_guid = "TEST-DEVICE-GUID"
+        device_dir = data_dir / device_guid
+        devices_dir = data_dir / "devices"
+        
+        device_dir.mkdir(parents=True)
+        devices_dir.mkdir(parents=True)
+
+        # Create initial .ydevice file
+        ydevice_path = devices_dir / "A.ydevice"
+        device_data = {
+            "deviceGUID": device_guid,
+            "shortDeviceId": "A",
+            "knowledge": "A-86",
+            "knowledgeInFullBudgetFile": "A-86"
+        }
+        with open(ydevice_path, 'w') as f:
+            json.dump(device_data, f)
+
+        # Initialize managers
+        device_manager = DeviceManager(budget_dir=budget_dir)
+        writer = YnabWriter(device_manager=device_manager)
+
+        # Create changes to write
+        new_transaction = Transaction(
+            entityId="NEW-TRANS-ID",
+            accountId="ACCOUNT-1",
+            amount=150.0,
+            date="2025-01-01",
+            cleared="Uncleared",
+            accepted=True,
+            entityVersion="A-87"
+        )
+        
+        # Mock get_device_directory to return the correct path
+        with patch.object(writer, '_get_device_directory', return_value=device_dir):
+            with patch.object(writer, '_get_ydevice_file_path', return_value=ydevice_path):
+                # Execute write operation
+                result = writer.write_changes(
+                    entities={"transactions": [new_transaction]},
+                    current_knowledge="A-86"
+                )
+
+        # Should return success with new version info
+        assert result["success"] is True
+        assert result["new_version"] == "A-87"
+        assert result["ydiff_filename"] == "A-86_A-87.ydiff"
+
+        # Should create .ydiff file
+        ydiff_path = device_dir / result["ydiff_filename"]
+        assert ydiff_path.exists()
+
+        # .ydiff should have correct content
+        with open(ydiff_path, 'r') as f:
+            ydiff_data = json.load(f)
+
+        assert ydiff_data["startVersion"] == "A-86"
+        assert ydiff_data["endVersion"] == "A-87"
+        assert len(ydiff_data["items"]) == 1
+        assert ydiff_data["items"][0]["entityId"] == "NEW-TRANS-ID"
+
+        # Should update .ydevice file
+        with open(ydevice_path, 'r') as f:
+            updated_device_data = json.load(f)
+
+        assert updated_device_data["knowledge"] == "A-87"
 
 
 class TestFilenameConvention:

@@ -116,7 +116,9 @@ def display_transactions(parser: YnabParser, limit: int = DEFAULT_ITEM_LIMIT) ->
     """
     typer.echo("Transaction Details:")
     for transaction in list(parser.transactions.values())[:limit]:
-        typer.echo(f"  - {transaction.payeeId}")
+        payee = parser.payees.get(transaction.payeeId)
+        payee_name = payee.name if payee else "Unknown Payee"
+        typer.echo(f"  - {payee_name}")
         typer.echo(f"    Amount: {format_currency(transaction.amount)}")
         typer.echo(f"    Date: {transaction.date}")
 
