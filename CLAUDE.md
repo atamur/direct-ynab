@@ -8,20 +8,12 @@ This is a Python project called "direct-ynab" that is designed for YNAB (You Nee
 - **LIBS.md**: External library analysis and integration details
 - **CLAUDE.md**: This file - general project guidance
 
-## Development Environment
-
-- **Language**: Python 3.12.3
-- **Virtual Environment**: Located at `~/.virtualenvs/direct-ynab/`
-- **IDE**: PyCharm/IntelliJ IDEA configuration present
-
 ## Project Setup
 
 To work with this project:
-
-Activate the virtual environment:
-   ```bash
-   source ~/.virtualenvs/direct-ynab/bin/activate
-   ```
+* Activate the virtual environment: `source ~/.virtualenvs/direct-ynab/bin/activate`
+* Run tests: `python -m pytest`
+ 
 ## Architecture Notes
 
 When code is added, it should follow Python best practices:
@@ -30,12 +22,6 @@ When code is added, it should follow Python best practices:
 - Create appropriate project structure (src/, tests/, etc.)
 - Add requirements.txt or pyproject.toml for dependency management
 - Follow PEP 8 style guidelines
-
-## Common Development Commands
-
-Since this is a fresh project, standard Python development commands will apply once the codebase is established:
-
-- **Run tests**: `python -m pytest` (once pytest is configured)
 
 ## Code Quality Standards
 
