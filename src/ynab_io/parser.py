@@ -23,7 +23,8 @@ class YnabParser:
         self.transactions: Dict[str, Transaction] = {}
 
     def parse(self) -> Budget:
-        yfull_path = self.device_dir / 'Budget.yfull'
+        device_guid = self.device_manager.get_active_device_guid()
+        yfull_path = self.device_manager.get_budget_file_path(device_guid)
         with open(yfull_path, 'r') as f:
             data = json.load(f)
 

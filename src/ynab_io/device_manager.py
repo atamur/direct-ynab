@@ -154,14 +154,48 @@ class DeviceManager:
         raise FileNotFoundError("Could not find any .ydevice file")
 
     def get_data_dir_path(self) -> Path:
+        """Get path to data directory (data1~*).
+        
+        Returns:
+            Path to the data directory
+        """
         return self._get_data_dir()
 
+    def get_devices_dir_path(self) -> Path:
+        """Get path to devices directory.
+        
+        Returns:
+            Path to the devices directory
+        """
+        return self._get_devices_dir()
+
     def get_device_dir_path(self, device_guid: str) -> Path:
-        data_dir = self._get_data_dir()
+        """Get path to specific device directory by GUID.
+        
+        Args:
+            device_guid: Device GUID
+            
+        Returns:
+            Path to the device directory
+        """
+        data_dir = self.get_data_dir_path()
         device_dir = data_dir / device_guid
         if not device_dir.exists():
             raise FileNotFoundError(f"Could not find device directory for GUID {device_guid}")
         return device_dir
+
+    def get_budget_file_path(self, device_guid: str) -> Path:
+        """Get path to Budget.yfull file for given device GUID.
+        
+        Args:
+            device_guid: Device GUID
+            
+        Returns:
+            Path to the Budget.yfull file
+        """
+        device_dir = self.get_device_dir_path(device_guid)
+        budget_file = device_dir / "Budget.yfull"
+        return budget_file
     
     def generate_device_guid(self) -> str:
         """Generate a unique device GUID.

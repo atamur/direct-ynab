@@ -82,6 +82,20 @@ This policy ensures production-ready code that doesn't mislead future developers
 - Implement graceful failure modes for critical systems where corruption is unacceptable
 - Start minimal and only implement what tests require - avoid over-engineering
 
+**Code Consolidation and Refactoring Patterns**:
+- Centralization efforts (like path discovery) significantly improve maintainability and consistency
+- API design consistency across methods creates predictable and cohesive interfaces
+- Even small consolidation changes can have large positive impacts on code quality
+- Comprehensive integration testing validates not just individual changes but entire architectural improvements
+- The TDD → Code Quality Review cycle ensures both functional correctness and adherence to standards
+
+**Test Suite Optimization and Coverage Analysis**:
+- Proactive test duplication analysis prevents maintenance bloat and improves test suite efficiency
+- Functional tests (parser, writer, integration) often provide better coverage than isolated unit tests
+- Test consolidation can reduce suite size significantly (e.g., 15% reduction) while maintaining 100% coverage
+- Existing comprehensive test suites may already cover new functionality through different testing approaches
+- Regular test suite reviews help identify and eliminate redundant test scenarios
+
 ## External Dependencies Integration Checklist
 
 When adding new external libraries, ALWAYS follow this checklist to avoid oversights:
