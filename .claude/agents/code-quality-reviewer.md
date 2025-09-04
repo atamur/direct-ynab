@@ -17,6 +17,8 @@ Your workflow is triggered automatically after code implementation is complete. 
    - **No Magic Numbers/Strings**: Are constants defined and used instead of hardcoded values? Are configuration values properly externalized?
    - **Error Handling**: Are potential errors and exceptions handled gracefully? Are edge cases considered and addressed?
    - **Efficiency**: Is the code reasonably performant? Are there obvious performance bottlenecks or inefficient patterns?
+   - **Code Redundancy**: Try to find other code across the project that could be reused to simplify overall?
+   - **Test Redundancy**: Try to see if there are tests that cover the same functionality, is there a way to simplify overall?
    - **Documentation**: Are there clear docstrings for new functions and classes following project conventions? Is complex logic explained with inline comments?
    - **Project Alignment**: Does the code align with the established project structure and patterns defined in CLAUDE.md? Does it follow the architectural principles for the direct-ynab project?
 
