@@ -129,8 +129,10 @@ class DeviceManager:
         """
         latest_knowledge = self.get_latest_version(list(device_knowledges.values()))
         
+        # Compare the latest version from each knowledge string with the overall latest
         for device_guid, knowledge in device_knowledges.items():
-            if knowledge == latest_knowledge:
+            knowledge_latest = self.get_latest_version_from_composite(knowledge)
+            if knowledge_latest == latest_knowledge:
                 return device_guid
         
         # This should never happen given the input, but fallback for safety
@@ -397,24 +399,122 @@ class DeviceManager:
             else:
                 return 0
     
-    def get_latest_version(self, versions: List[str]) -> str:
-        """Get the latest version from a list.
+    def parse_composite_knowledge_string(self, composite_str: str) -> List[Tuple[str, int]]:
+        """Parse composite knowledge string like 'A-11429,B-63,C-52'.
+        
+        Handles both single version strings (e.g., 'A-86') and composite 
+        knowledge strings with multiple device versions separated by commas.
         
         Args:
-            versions: List of version strings
+            composite_str: Knowledge string, either single ('A-86') or 
+                          composite ('A-11429,B-63,C-52')
+            
+        Returns:
+            List of (device_id, version_number) tuples sorted by device_id
+            
+        Raises:
+            ValueError: If composite_str is not a string or any version is invalid
+            
+        Examples:
+            >>> dm = DeviceManager()
+            >>> dm.parse_composite_knowledge_string("A-86")
+            [('A', 86)]
+            >>> dm.parse_composite_knowledge_string("A-11429,B-63,C-52")
+            [('A', 11429), ('B', 63), ('C', 52)]
+        """
+        if not isinstance(composite_str, str):
+            raise ValueError(f"Knowledge string must be a string, got {type(composite_str)}")
+        
+        composite_str = composite_str.strip()
+        if not composite_str:
+            raise ValueError("Knowledge string cannot be empty")
+        
+        if ',' not in composite_str:
+            # Single version string
+            device_id, version_num = self.parse_version_string(composite_str)
+            return [(device_id, version_num)]
+        
+        # Split by comma and parse each version
+        version_parts = [part.strip() for part in composite_str.split(',') if part.strip()]
+        if not version_parts:
+            raise ValueError("No valid version parts found in composite knowledge string")
+        
+        parsed_versions = []
+        for version_part in version_parts:
+            try:
+                device_id, version_num = self.parse_version_string(version_part)
+                parsed_versions.append((device_id, version_num))
+            except ValueError as e:
+                raise ValueError(f"Invalid version part '{version_part}' in composite string: {e}")
+        
+        return parsed_versions
+
+    def get_latest_version_from_composite(self, composite_str: str) -> str:
+        """Get the latest version from a composite knowledge string.
+        
+        For composite strings like 'A-11429,B-63,C-52', returns the version
+        with the highest version number. If version numbers are equal,
+        sorts by device ID alphabetically.
+        
+        Args:
+            composite_str: Knowledge string, single or composite format
+            
+        Returns:
+            Latest version string in the format 'A-86'
+            
+        Examples:
+            >>> dm = DeviceManager()
+            >>> dm.get_latest_version_from_composite("A-86")
+            'A-86'
+            >>> dm.get_latest_version_from_composite("A-11429,B-63,C-52")
+            'A-11429'
+        """
+        parsed_versions = self.parse_composite_knowledge_string(composite_str)
+        
+        # Find the version with the highest version number, then by device ID
+        latest_version = max(parsed_versions, key=lambda x: (x[1], x[0]))
+        return f"{latest_version[0]}-{latest_version[1]}"
+
+    def get_latest_version(self, versions: List[str]) -> str:
+        """Get the latest version from a list of knowledge strings.
+        
+        Processes both single version strings and composite knowledge strings,
+        extracting the highest version number across all inputs.
+        
+        Args:
+            versions: List of knowledge strings (single or composite format)
         
         Returns:
-            Latest version string
+            Latest version string in format 'A-86'
+            
+        Raises:
+            ValueError: If versions list is empty or contains invalid strings
+            
+        Examples:
+            >>> dm = DeviceManager()
+            >>> dm.get_latest_version(["A-86", "B-100"])
+            'B-100'
+            >>> dm.get_latest_version(["A-86", "A-11429,B-63", "B-100"])
+            'A-11429'
         """
         if not versions:
             raise ValueError("Version list cannot be empty")
         
+        # Extract the latest version from each knowledge string
+        all_latest_versions = []
+        for version_str in versions:
+            try:
+                latest_from_this_str = self.get_latest_version_from_composite(version_str)
+                all_latest_versions.append(latest_from_this_str)
+            except ValueError as e:
+                raise ValueError(f"Invalid version string '{version_str}': {e}")
+        
+        # Find the overall latest version using consistent sorting logic
         def version_sort_key(version_str: str):
             device_id, version_num = self.parse_version_string(version_str)
-            # Sort by version number first, then device ID
             return (version_num, device_id)
         
-        return max(versions, key=version_sort_key)
+        return max(all_latest_versions, key=version_sort_key)
 
     def get_global_knowledge(self) -> Optional[str]:
         """Calculate global knowledge from all .ydevice files.
