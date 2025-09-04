@@ -80,15 +80,77 @@ class DeviceManager:
         return device_guid
 
     def get_active_device_guid(self) -> str:
-        """Get active device GUID. Currently returns first available device.
+        """Get active device GUID based on latest knowledge version.
         
         Returns:
-            Device GUID of the active device
+            Device GUID of the device with the latest knowledge
+        """
+        device_knowledges = self._collect_device_knowledges()
+        
+        if device_knowledges:
+            return self._find_device_with_latest_knowledge(device_knowledges)
+        
+        return self._get_fallback_device_guid()
+
+    def _collect_device_knowledges(self) -> Dict[str, str]:
+        """Collect knowledge versions from all valid .ydevice files.
+        
+        Returns:
+            Dictionary mapping device GUIDs to their knowledge versions
         """
         devices_dir = self._get_devices_dir()
+        device_knowledges = {}
+        
+        for p in devices_dir.iterdir():
+            if p.is_file() and p.suffix == '.ydevice':
+                try:
+                    with open(p, 'r') as f:
+                        device_data = json.load(f)
+                    
+                    device_guid = device_data.get('deviceGUID')
+                    knowledge = device_data.get('knowledge')
+                    
+                    if device_guid and knowledge:
+                        device_knowledges[device_guid] = knowledge
+                except (json.JSONDecodeError, IOError):
+                    # Skip corrupted device files
+                    continue
+        
+        return device_knowledges
+
+    def _find_device_with_latest_knowledge(self, device_knowledges: Dict[str, str]) -> str:
+        """Find the device GUID with the latest knowledge version.
+        
+        Args:
+            device_knowledges: Dictionary mapping device GUIDs to knowledge versions
+            
+        Returns:
+            Device GUID with the latest knowledge
+        """
+        latest_knowledge = self.get_latest_version(list(device_knowledges.values()))
+        
+        for device_guid, knowledge in device_knowledges.items():
+            if knowledge == latest_knowledge:
+                return device_guid
+        
+        # This should never happen given the input, but fallback for safety
+        return next(iter(device_knowledges.keys()))
+
+    def _get_fallback_device_guid(self) -> str:
+        """Get fallback device GUID when no valid knowledge versions found.
+        
+        Returns:
+            First available device GUID
+            
+        Raises:
+            FileNotFoundError: If no .ydevice files found
+        """
+        devices_dir = self._get_devices_dir()
+        
         for p in devices_dir.iterdir():
             if p.is_file() and p.suffix == '.ydevice':
                 return self.get_device_guid(p.stem)
+        
         raise FileNotFoundError("Could not find any .ydevice file")
 
     def get_data_dir_path(self) -> Path:

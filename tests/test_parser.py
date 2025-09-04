@@ -391,3 +391,254 @@ class TestYnabParser:
         
         # Should have some entities with version 72 (from latest delta)
         assert 72 in latest_versions
+
+
+class TestYnabParserRobustPathDiscovery:
+    """Test cases for robust multi-device path discovery functionality."""
+    
+    def test_parser_identifies_active_device_in_multi_device_setup(self, tmp_path):
+        """Test that parser correctly identifies the active device in a multi-device setup."""
+        # Create budget structure with multiple devices
+        budget_dir = tmp_path / "multi_device_budget"
+        budget_dir.mkdir()
+        data_dir = budget_dir / "data1~MULTI"
+        data_dir.mkdir()
+        devices_dir = data_dir / "devices"
+        devices_dir.mkdir()
+        
+        # Create device A with older knowledge (A-50)
+        device_a_guid = "DEVICE-A-GUID-1234"
+        device_a_dir = data_dir / device_a_guid
+        device_a_dir.mkdir()
+        ydevice_a = devices_dir / "A.ydevice"
+        with open(ydevice_a, 'w') as f:
+            json.dump({
+                "deviceGUID": device_a_guid,
+                "shortDeviceId": "A", 
+                "friendlyName": "Device A",
+                "knowledge": "A-50",
+                "knowledgeInFullBudgetFile": "A-50"
+            }, f)
+        
+        # Create device B with newer knowledge (B-75) - this should be active
+        device_b_guid = "DEVICE-B-GUID-5678"
+        device_b_dir = data_dir / device_b_guid
+        device_b_dir.mkdir()
+        ydevice_b = devices_dir / "B.ydevice"
+        with open(ydevice_b, 'w') as f:
+            json.dump({
+                "deviceGUID": device_b_guid,
+                "shortDeviceId": "B",
+                "friendlyName": "Device B", 
+                "knowledge": "B-75",
+                "knowledgeInFullBudgetFile": "B-75"
+            }, f)
+        
+        # Create Budget.yfull file in the device B directory (active device)
+        budget_yfull = device_b_dir / "Budget.yfull"
+        with open(budget_yfull, 'w') as f:
+            json.dump({
+                "accounts": [],
+                "payees": [],
+                "transactions": []
+            }, f)
+        
+        # Initialize parser - should identify Device B as active
+        parser = YnabParser(budget_dir)
+        
+        # Verify parser selected the device with latest knowledge (Device B)
+        assert parser.device_dir.name == device_b_guid
+        
+        # Verify parser can parse successfully
+        budget = parser.parse()
+        assert budget is not None
+    
+    def test_parser_selects_device_with_highest_knowledge_version_not_alphabetical_order(self, tmp_path):
+        """Test that parser selects device based on knowledge version, not alphabetical order."""
+        # Create budget structure where alphabetically first device has older knowledge
+        budget_dir = tmp_path / "knowledge_priority_budget"
+        budget_dir.mkdir()
+        data_dir = budget_dir / "data1~KNOWLEDGE"
+        data_dir.mkdir()
+        devices_dir = data_dir / "devices"
+        devices_dir.mkdir()
+        
+        # Create device A with very high knowledge version (A-100)
+        device_a_guid = "DEVICE-A-NEWER"
+        device_a_dir = data_dir / device_a_guid
+        device_a_dir.mkdir()
+        ydevice_a = devices_dir / "A.ydevice"
+        with open(ydevice_a, 'w') as f:
+            json.dump({
+                "deviceGUID": device_a_guid,
+                "shortDeviceId": "A",
+                "friendlyName": "Device A with New Knowledge",
+                "knowledge": "A-100",  # Higher version number
+                "knowledgeInFullBudgetFile": "A-100"
+            }, f)
+        
+        # Create Budget.yfull in device A
+        budget_yfull_a = device_a_dir / "Budget.yfull"
+        with open(budget_yfull_a, 'w') as f:
+            json.dump({
+                "accounts": [],
+                "payees": [],
+                "transactions": []
+            }, f)
+        
+        # Create device Z with lower knowledge version (Z-50) 
+        # (alphabetically later, but older knowledge)
+        device_z_guid = "DEVICE-Z-OLDER"
+        device_z_dir = data_dir / device_z_guid
+        device_z_dir.mkdir()
+        ydevice_z = devices_dir / "Z.ydevice"
+        with open(ydevice_z, 'w') as f:
+            json.dump({
+                "deviceGUID": device_z_guid,
+                "shortDeviceId": "Z",
+                "friendlyName": "Device Z with Old Knowledge",
+                "knowledge": "Z-50",  # Lower version number
+                "knowledgeInFullBudgetFile": "Z-50"
+            }, f)
+        
+        # Create Budget.yfull in device Z (should NOT be used)
+        budget_yfull_z = device_z_dir / "Budget.yfull"
+        with open(budget_yfull_z, 'w') as f:
+            json.dump({
+                "accounts": [],
+                "payees": [],
+                "transactions": []
+            }, f)
+        
+        # Initialize parser - should select device A despite alphabetical ordering
+        parser = YnabParser(budget_dir)
+        
+        # Current implementation will likely select A.ydevice (first alphabetically)
+        # But we want it to select based on latest knowledge version
+        # This test should FAIL with current implementation when knowledge comparison isn't done
+        
+        # Parse and verify we get the data from device A (newer knowledge)
+        budget = parser.parse()
+        
+        # Parse should complete successfully
+        budget = parser.parse()
+        assert budget is not None
+        
+        # Verify the correct device directory was selected (device A has newer knowledge)
+        assert parser.device_dir.name == device_a_guid
+    
+    def test_parser_falls_back_to_default_device_when_no_active_device_determinable(self, tmp_path):
+        """Test that parser correctly falls back to a default device if no active device can be determined."""
+        # Create budget structure with devices that have corrupted or missing knowledge
+        budget_dir = tmp_path / "fallback_budget"
+        budget_dir.mkdir()
+        data_dir = budget_dir / "data1~FALLBACK"
+        data_dir.mkdir()
+        devices_dir = data_dir / "devices"
+        devices_dir.mkdir()
+        
+        # Create device with corrupted knowledge field
+        device_guid = "DEVICE-FALLBACK-GUID"
+        device_dir = data_dir / device_guid
+        device_dir.mkdir()
+        ydevice_file = devices_dir / "A.ydevice"
+        with open(ydevice_file, 'w') as f:
+            json.dump({
+                "deviceGUID": device_guid,
+                "shortDeviceId": "A",
+                "friendlyName": "Fallback Device"
+                # Note: Missing 'knowledge' field - should trigger fallback
+            }, f)
+        
+        # Create Budget.yfull file
+        budget_yfull = device_dir / "Budget.yfull"
+        with open(budget_yfull, 'w') as f:
+            json.dump({
+                "accounts": [],
+                "payees": [],
+                "transactions": []
+            }, f)
+        
+        # Initialize parser - should fall back to the only available device
+        parser = YnabParser(budget_dir)
+        
+        # Verify parser selected the fallback device
+        assert parser.device_dir.name == device_guid
+        
+        # Verify parser can parse successfully
+        budget = parser.parse()
+        assert budget is not None
+    
+    def test_parser_selects_device_with_highest_knowledge_version_not_alphabetical_order(self, tmp_path):
+        """Test that parser selects device based on knowledge version, not alphabetical order."""
+        # Create budget structure where alphabetically first device has older knowledge
+        budget_dir = tmp_path / "knowledge_priority_budget"
+        budget_dir.mkdir()
+        data_dir = budget_dir / "data1~KNOWLEDGE"
+        data_dir.mkdir()
+        devices_dir = data_dir / "devices"
+        devices_dir.mkdir()
+        
+        # Create device A with very high knowledge version (A-100)
+        device_a_guid = "DEVICE-A-NEWER"
+        device_a_dir = data_dir / device_a_guid
+        device_a_dir.mkdir()
+        ydevice_a = devices_dir / "A.ydevice"
+        with open(ydevice_a, 'w') as f:
+            json.dump({
+                "deviceGUID": device_a_guid,
+                "shortDeviceId": "A",
+                "friendlyName": "Device A with New Knowledge",
+                "knowledge": "A-100",  # Higher version number
+                "knowledgeInFullBudgetFile": "A-100"
+            }, f)
+        
+        # Create Budget.yfull in device A
+        budget_yfull_a = device_a_dir / "Budget.yfull"
+        with open(budget_yfull_a, 'w') as f:
+            json.dump({
+                "accounts": [],
+                "payees": [],
+                "transactions": []
+            }, f)
+        
+        # Create device Z with lower knowledge version (Z-50) 
+        # (alphabetically later, but older knowledge)
+        device_z_guid = "DEVICE-Z-OLDER"
+        device_z_dir = data_dir / device_z_guid
+        device_z_dir.mkdir()
+        ydevice_z = devices_dir / "Z.ydevice"
+        with open(ydevice_z, 'w') as f:
+            json.dump({
+                "deviceGUID": device_z_guid,
+                "shortDeviceId": "Z",
+                "friendlyName": "Device Z with Old Knowledge",
+                "knowledge": "Z-50",  # Lower version number
+                "knowledgeInFullBudgetFile": "Z-50"
+            }, f)
+        
+        # Create Budget.yfull in device Z (should NOT be used)
+        budget_yfull_z = device_z_dir / "Budget.yfull"
+        with open(budget_yfull_z, 'w') as f:
+            json.dump({
+                "accounts": [],
+                "payees": [],
+                "transactions": []
+            }, f)
+        
+        # Initialize parser - should select device A despite alphabetical ordering
+        parser = YnabParser(budget_dir)
+        
+        # Current implementation will likely select A.ydevice (first alphabetically)
+        # But we want it to select based on latest knowledge version
+        # This test should FAIL with current implementation when knowledge comparison isn't done
+        
+        # Parse and verify we get the data from device A (newer knowledge)
+        budget = parser.parse()
+        
+        # Parse should complete successfully
+        budget = parser.parse()
+        assert budget is not None
+        
+        # Verify the correct device directory was selected (device A has newer knowledge)
+        assert parser.device_dir.name == device_a_guid

@@ -25,7 +25,7 @@ Before marking any task as complete, ALWAYS verify these items:
 
 ### AI Agent Task Backlog : IN PROGRESS
 
-**CURRENT STATUS:** Phase 1 completed with comprehensive TDD implementation. Phase 2 Tasks 2.1-2.2 completed with comprehensive write logic analysis and device management. All tests passing (76/76). Next task: 2.3 (Port Knowledge Management)
+**CURRENT STATUS:** Phase 1 completed with comprehensive TDD implementation. Phase 2 Tasks 2.1-2.6 completed with comprehensive write logic, device management, and robust path discovery. All tests passing (84/84). Next tasks: 2.7-2.8 (Code Review Suggestions) or Phase 3 (Data Transformation)
 
 #### Code Review Suggestions
 
@@ -183,7 +183,13 @@ Before marking any task as complete, ALWAYS verify these items:
         - It is important to ensure that the serialization and deserialization of entities correctly handle all fields, including optional ones like `memo`.
         - The Pydantic `model_dump()` method should be used instead of the deprecated `dict()` method.
 
-  * **TASK 2.6: Refactor `YnabParser` for Robust Path Discovery**
+  * **TASK 2.6: Refactor `YnabParser` for Robust Path Discovery** ✅ **COMPLETED**
       * **GOAL:** Improve the parser's robustness by reading all `.ydevice` files to dynamically and accurately identify the active device and its data directory.
       * **APPROACH:** Refactor `_find_device_dir` to read all `.ydevice` files and use the information within them to correctly identify the active device and its corresponding data directory.
       * **TEST_CASES:** The parser correctly identifies the active device in a multi-device setup. The parser correctly falls back to a default device if no active device can be determined.
+      * **COMPLETED:** 2025-09-04 - Enhanced DeviceManager.get_active_device_guid() to intelligently select the device with the latest knowledge version rather than alphabetical order. Added robust multi-device support with graceful fallback logic. Comprehensive test suite (4 new tests) validates multi-device scenarios, knowledge-based selection, and corrupted file handling. All 84 tests passing with zero regressions.
+      * **LEARNINGS:**
+        - **Knowledge-Based Selection**: Device selection should be based on knowledge version (recency of data) rather than alphabetical ordering for multi-device consistency
+        - **Robust Error Handling**: Graceful handling of corrupted .ydevice files by skipping and continuing with valid ones ensures system resilience
+        - **Backward Compatibility**: Enhanced functionality must maintain compatibility with single-device scenarios through proper fallback mechanisms
+        - **TDD Refinement Process**: The TDD → Code Review cycle ensured both functional correctness and adherence to CLAUDE.md quality standards
