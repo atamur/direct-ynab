@@ -29,10 +29,7 @@ Before marking any task as complete, ALWAYS verify these items:
 
 #### Phase 2: Advanced CLI Reporting
 
-*   **TASK 2.9: (TDD) Create Budget Calculator (src/ynab_io/budget_calculator.py)**
-    *   **GOAL:** Create a `BudgetCalculator` class that takes a `Budget` object and provides calculation methods.
-    *   **APPROACH:** The class will be initialized with a `Budget` object. It will contain methods for calculating account balances and monthly budget summaries.
-    *   **TEST_CASES:** The `BudgetCalculator` is initialized correctly with a `Budget` object.
+
 
 *   **TASK 2.10: (TDD) Implement Account Balance Calculation in BudgetCalculator**
     *   **GOAL:** Implement `get_account_balance(account_id)` in `BudgetCalculator`.
@@ -229,3 +226,11 @@ Before marking any task as complete, ALWAYS verify these items:
         - **Error Handling Hierarchy**: Proper exception type checking order (JSONDecodeError before ValueError) prevents incorrect error categorization
         - **Platform Independence**: Using `errno` module constants instead of hardcoded error numbers ensures cross-platform compatibility
         - **Test Coverage Impact**: Comprehensive error handling tests (26 test cases) validate all error scenarios without requiring extensive integration testing
+
+*   **TASK 2.9: (TDD) Create Budget Calculator (src/ynab_io/budget_calculator.py)** ✅ **COMPLETED**
+    *   **GOAL:** Create a `BudgetCalculator` class that takes a `Budget` object and provides calculation methods.
+    *   **APPROACH:** The class will be initialized with a `Budget` object. It will contain methods for calculating account balances and monthly budget summaries.
+    *   **TEST_CASES:** The `BudgetCalculator` is initialized correctly with a `Budget` object.
+    *   **COMPLETED:** 2025-09-05 - Created the `BudgetCalculator` class in `src/ynab_io/budget_calculator.py` and a corresponding test file `tests/test_budget_calculator.py`. The `BudgetCalculator` is initialized with a `Budget` object. All tests pass.
+    *   **LEARNINGS:**
+        - Running `pytest` from the root directory is crucial for the test environment to correctly identify and import modules from the `src` directory.
