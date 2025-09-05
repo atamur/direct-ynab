@@ -134,3 +134,4 @@ Desktop.ini
 backups/
 # Log files
 logs/
+/.direnv/

@@ -11,7 +11,7 @@ This is a Python project called "direct-ynab" that is designed for YNAB (You Nee
 ## Project Setup
 
 To work with this project:
-* Activate the virtual environment: `source ~/.virtualenvs/direct-ynab/bin/activate`
+* Project uses direnv, so setup is automatic
 * Run tests: `python -m pytest`
  
 ## Architecture Notes
