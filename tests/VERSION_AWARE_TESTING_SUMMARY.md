@@ -88,14 +88,14 @@ def test_final_state(version_aware_parser):
 
 ### Design Patterns
 - **Decorator Pattern**: For test annotations
-- **Fixture Pattern**: For pytest integration  
+- **Fixture Pattern**: For pytest integration
 - **State Pattern**: For parser version management
 - **Factory Pattern**: For creating version-specific parsers
 
 ## Backward Compatibility
 
 ✅ **All existing tests continue to pass without modification**
-✅ **No breaking changes to existing API**  
+✅ **No breaking changes to existing API**
 ✅ **Optional adoption** - tests work with or without annotations
 ✅ **Existing fixtures remain unchanged**
 
@@ -148,7 +148,7 @@ def test_new_way(version_aware_parser):
 
 ### Test Files
 - `/tests/test_parser.py` - Added version tracking tests
-- `/tests/test_budget_version_annotation.py` - Decorator system tests  
+- `/tests/test_budget_version_annotation.py` - Decorator system tests
 - `/tests/test_version_aware_fixture_integration.py` - Integration tests
 - `/tests/test_version_annotation_examples.py` - Usage examples and migration patterns
 

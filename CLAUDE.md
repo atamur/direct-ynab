@@ -13,7 +13,7 @@ This is a Python project called "direct-ynab" that is designed for YNAB (You Nee
 To work with this project:
 * Project uses direnv, so setup is automatic
 * Run tests: `python -m pytest`
- 
+
 ## Architecture Notes
 
 When code is added, it should follow Python best practices:
@@ -29,7 +29,7 @@ When code is added, it should follow Python best practices:
 When using TDD methodology (tdd-red-green-refactor agent), maintain strict code quality standards:
 
 - **❌ NO TODO Comments**: Never leave TODO comments or placeholder functionality in committed code
-- **❌ NO Unimplemented Code Paths**: Remove all unimplemented features, parameters, or methods that aren't fully functional  
+- **❌ NO Unimplemented Code Paths**: Remove all unimplemented features, parameters, or methods that aren't fully functional
 - **✅ Clean API Design**: Method signatures should only include parameters that are actually used and supported
 - **✅ Documentation Accuracy**: Docstrings must reflect actual functionality, not planned features
 - **✅ Test Coverage**: All code paths must be tested and functional

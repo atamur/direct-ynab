@@ -64,6 +64,7 @@ class YnabParser:
         Returns:
             Budget object at the specified version state
         """
+
         def delta_strategy():
             if target_version > 0:
                 self._apply_deltas_up_to_version(target_version)
@@ -106,7 +107,7 @@ class YnabParser:
 
         # Parse master categories with nested categories
         self._parse_master_categories(data.get("masterCategories", []))
-        
+
         # Save base state before applying deltas
         self._save_base_state()
 
@@ -191,8 +192,7 @@ class YnabParser:
     def _get_delta_sort_key(self, delta_path: Path) -> int:
         start_version, _ = self._parse_delta_versions(delta_path.name)
         return self._get_version_number_from_composite(
-            start_version,
-            f"delta file '{delta_path.name}'"
+            start_version, f"delta file '{delta_path.name}'"
         )
 
     def _get_version_number_from_composite(
@@ -297,7 +297,9 @@ class YnabParser:
     def _get_version_end_number(self, delta_path: Path) -> int:
         """Extract the end version number from a delta filename."""
         _, end_version = self._parse_delta_versions(delta_path.name)
-        return self._get_version_number_from_composite(end_version, f"delta file '{delta_path.name}'")
+        return self._get_version_number_from_composite(
+            end_version, f"delta file '{delta_path.name}'"
+        )
 
     def get_available_versions(self) -> List[int]:
         """Get sorted list of available version numbers."""
@@ -317,14 +319,14 @@ class YnabParser:
             Dictionary containing deep copies of all entity collections
         """
         return {
-            'accounts': copy.deepcopy(self.accounts),
-            'payees': copy.deepcopy(self.payees),
-            'transactions': copy.deepcopy(self.transactions),
-            'master_categories': copy.deepcopy(self.master_categories),
-            'categories': copy.deepcopy(self.categories),
-            'monthly_budgets': copy.deepcopy(self.monthly_budgets),
-            'monthly_category_budgets': copy.deepcopy(self.monthly_category_budgets),
-            'scheduled_transactions': copy.deepcopy(self.scheduled_transactions)
+            "accounts": copy.deepcopy(self.accounts),
+            "payees": copy.deepcopy(self.payees),
+            "transactions": copy.deepcopy(self.transactions),
+            "master_categories": copy.deepcopy(self.master_categories),
+            "categories": copy.deepcopy(self.categories),
+            "monthly_budgets": copy.deepcopy(self.monthly_budgets),
+            "monthly_category_budgets": copy.deepcopy(self.monthly_category_budgets),
+            "scheduled_transactions": copy.deepcopy(self.scheduled_transactions),
         }
 
     def _restore_from_state(self, state: Dict[str, Any]):
@@ -333,14 +335,14 @@ class YnabParser:
         Args:
             state: Dictionary containing entity collections to restore
         """
-        self.accounts = copy.deepcopy(state['accounts'])
-        self.payees = copy.deepcopy(state['payees'])
-        self.transactions = copy.deepcopy(state['transactions'])
-        self.master_categories = copy.deepcopy(state['master_categories'])
-        self.categories = copy.deepcopy(state['categories'])
-        self.monthly_budgets = copy.deepcopy(state['monthly_budgets'])
-        self.monthly_category_budgets = copy.deepcopy(state['monthly_category_budgets'])
-        self.scheduled_transactions = copy.deepcopy(state['scheduled_transactions'])
+        self.accounts = copy.deepcopy(state["accounts"])
+        self.payees = copy.deepcopy(state["payees"])
+        self.transactions = copy.deepcopy(state["transactions"])
+        self.master_categories = copy.deepcopy(state["master_categories"])
+        self.categories = copy.deepcopy(state["categories"])
+        self.monthly_budgets = copy.deepcopy(state["monthly_budgets"])
+        self.monthly_category_budgets = copy.deepcopy(state["monthly_category_budgets"])
+        self.scheduled_transactions = copy.deepcopy(state["scheduled_transactions"])
 
     def _validate_target_version(self, target_version: int):
         """Validate that target version is valid and available.
@@ -352,11 +354,15 @@ class YnabParser:
             ValueError: If target_version is invalid or not available
         """
         if target_version < 0:
-            raise ValueError(f"Version {target_version} is invalid: version must be non-negative")
+            raise ValueError(
+                f"Version {target_version} is invalid: version must be non-negative"
+            )
 
         available_versions = self.get_available_versions()
         if target_version not in available_versions:
-            raise ValueError(f"Version {target_version} not found in available versions: {available_versions}")
+            raise ValueError(
+                f"Version {target_version} not found in available versions: {available_versions}"
+            )
 
     def _apply_deltas_up_to_version(self, target_version: int):
         """Apply delta files up to the specified target version.

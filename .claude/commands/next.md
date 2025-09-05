@@ -1,1 +1,1 @@
-Execute the next task but first accustom yourself with the AI Agent Instructions (including TASK IMPLEMENTAION LOOP and CRITICAL: Task Completion Standards) in TASKS.md 
+Execute the next task but first accustom yourself with the AI Agent Instructions (including TASK IMPLEMENTAION LOOP and CRITICAL: Task Completion Standards) in TASKS.md

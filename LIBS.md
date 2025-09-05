@@ -39,8 +39,8 @@ Brief description of what the library does and its primary purpose.
 
 ## pydantic (v2.11)
 
-**Repository**: https://github.com/pydantic/pydantic  
-**Installation**: `pip install pydantic`  
+**Repository**: https://github.com/pydantic/pydantic
+**Installation**: `pip install pydantic`
 **Status**: ✅ Installed and Added to pyproject.toml
 
 ### Overview

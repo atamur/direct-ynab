@@ -16,7 +16,7 @@ def test_budget_path():
 
 def assert_parser_collections_populated(parser):
     """Shared helper to verify parser has populated collections.
-    
+
     Replaces repetitive is_not_empty() assertions across test files.
     """
     assert_that(parser.accounts).is_not_empty()
@@ -26,7 +26,7 @@ def assert_parser_collections_populated(parser):
 
 def assert_parser_collections_exist(parser):
     """Shared helper to verify parser has core collection attributes.
-    
+
     Used for testing parser state without requiring populated data.
     """
     assert_that(parser.accounts).is_not_none()

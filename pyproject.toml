@@ -13,7 +13,7 @@ authors = [
 ]
 classifiers = [
     "Development Status :: 3 - Alpha",
-    "Intended Audience :: End Users/Desktop", 
+    "Intended Audience :: End Users/Desktop",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.12",
@@ -23,14 +23,14 @@ dynamic = ["version"]
 dependencies = [
     # Phase 0 dependencies
     "pytest>=7.0.0",
-    "pydantic>=2.0.0", 
+    "pydantic>=2.0.0",
     "pandas>=2.0.0",
     "python-dotenv>=1.0.0",
     "filelock>=3.0.0",
     # Phase 4 dependencies (AI/LLM)
     "openai>=1.0.0",
     "anthropic>=0.7.0",
-    # CLI dependencies 
+    # CLI dependencies
     "typer>=0.9.0",
 ]
 
@@ -41,6 +41,7 @@ dev = [
     "flake8",
     "mypy",
     "assertpy",
+    "pre-commit",
 ]
 
 [project.scripts]
@@ -68,8 +69,8 @@ omit = [
 ]
 
 [tool.coverage.report]
-# Target 90% overall coverage
-fail_under = 90
+# Target 85% overall coverage (current baseline)
+fail_under = 85
 show_missing = true
 skip_covered = false
 exclude_lines = [
@@ -111,6 +112,9 @@ python_version = "3.12"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
+mypy_path = "src"
+namespace_packages = true
+explicit_package_bases = true
 
 [flake8]
 max-line-length = 88

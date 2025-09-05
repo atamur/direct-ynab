@@ -10,7 +10,7 @@ Use TodoWrite tool to write down all the 6 steps below before you start.
 0. **Review code structure and details** - Use CLAUDE.md and LIBS.md for reference
 1. **Pick next task sequentially** - Pick with the next available task from Phase 0, 1, 2, 3, 4, or 5
 2. **Follow TDD methodology** - Use tdd-red-green-refactor agent to implement the task. Each task has GOAL/APPROACH/TEST_CASES structure
-3. **Review the code diff** - Use code-quality-reviewer agent. Review the changes made to the code and make sure they are correct, if any feedback send it back to step (3). 
+3. **Review the code diff** - Use code-quality-reviewer agent. Review the changes made to the code and make sure they are correct, if any feedback send it back to step (3).
 4. **Mark task complete** - MOVE COMPLETED TASK TO "TASKS DONE" SECTION (cut from IN PROGRESS and paste into TASKS DONE with completion details)
 5. **Append learnings to the task** - Update the task you just moved with learnings that could be useful in the future
 6. **Append global learnings to CLAUDE.md, TASKS.md, and LIBS.md** - Think "how could i have achieved the goal faster?" If anything comes up add that to the relevant documents.
@@ -131,7 +131,7 @@ Before marking any task as complete, ALWAYS verify these items:
       * **APPROACH:** Create a new parser in `src/ynab_io/parser.py` that uses Pydantic models to represent the YNAB entities. The parser is responsible for reading the `Budget.yfull` and `.ydiff` files and creating the Pydantic models.
       * **TEST_CASES:** The parser correctly parses the `Budget.yfull` and `.ydiff` files. The final state of the budget is correct after applying the deltas.
       * **COMPLETED:** 2025-09-02 - Created a new YNAB parser from scratch using Pydantic models. The new parser correctly handles both the `Budget.yfull` snapshot and the `.ydiff` delta files. Critical bug fix implemented for device directory discovery using deviceGUID from .ydevice files. Comprehensive test suite created with 24 tests covering all functionality including error cases and edge cases. Pydantic models updated to use ConfigDict to resolve deprecation warnings.
-      * **LEARNINGS:** 
+      * **LEARNINGS:**
         - **Dynamic Path Discovery**: Never assume fixed paths, always discover them dynamically based on the root budget directory. The .ydevice file contains the deviceGUID that must be used to locate the actual data directory.
         - **TDD Value**: Comprehensive test coverage (24 tests) revealed and validated the device discovery fix, ensuring robustness across different YNAB4 budget structures.
         - **Error Handling**: Proper error handling for malformed .ydevice files and missing directories is essential for production reliability.

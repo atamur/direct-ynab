@@ -9,14 +9,14 @@ class BudgetCalculator:
     def get_account_balance(self, account_id: str) -> tuple[float, float]:
         """
         Calculate the account balance as (cleared_balance, uncleared_balance).
-        
+
         This method excludes transactions from the current date (today) to ensure
         balance calculations are stable and don't include pending same-day transactions
         that may still be processing.
-        
+
         Args:
             account_id: The unique identifier of the account
-            
+
         Returns:
             A tuple of (cleared_balance, uncleared_balance) where:
             - cleared_balance: Sum of all Cleared/Reconciled transactions (excluding today)
