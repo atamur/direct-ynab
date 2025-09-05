@@ -10,6 +10,7 @@ from assertpy import assert_that
 
 from ynab_io.testing import budget_version
 from ynab_io.models import Account, Payee, Transaction
+from .conftest import assert_parser_collections_populated
 
 
 class TestVersionAnnotationExamples:
@@ -99,9 +100,7 @@ class TestVersionAnnotationExamples:
         assert_that(len(parser.applied_deltas)).is_greater_than(10)  # Multiple deltas
         
         # Final state should have entities (flexible count assertions)
-        assert_that(parser.accounts).is_not_empty()
-        assert_that(parser.payees).is_not_empty()
-        assert_that(parser.transactions).is_not_empty()
+        assert_parser_collections_populated(parser)
         
         # All entities should be properly typed
         for account in parser.accounts.values():
@@ -122,9 +121,7 @@ class TestVersionAnnotationExamples:
         # Should get the same state as latest version (flexible count assertions)
         assert_that(parser.applied_deltas).is_not_empty()
         assert_that(len(parser.applied_deltas)).is_greater_than(10)  # Multiple deltas
-        assert_that(parser.accounts).is_not_empty()
-        assert_that(parser.payees).is_not_empty()
-        assert_that(parser.transactions).is_not_empty()
+        assert_parser_collections_populated(parser)
 
 
 class TestVersionAnnotationMigrationExamples:

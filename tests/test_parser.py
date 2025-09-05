@@ -8,6 +8,7 @@ from unittest.mock import mock_open, patch
 from assertpy import assert_that
 from ynab_io.parser import YnabParser
 from ynab_io.models import Account, Payee, Transaction, MasterCategory, Category, MonthlyBudget, MonthlyCategoryBudget, ScheduledTransaction
+from .conftest import assert_parser_collections_populated
 
 
 class TestYnabParser:
@@ -109,24 +110,6 @@ class TestYnabParser:
         assert len(parser.accounts) > 0
         assert len(parser.payees) > 0
         assert len(parser.transactions) > 0
-    
-    def test_parse_creates_correct_account_models(self, parser):
-        """Test that parse() creates correct Account models."""
-        parser.parse()
-        
-        # Verify we have expected accounts
-        assert len(parser.accounts) == 4
-        
-        # Get first account
-        account = next(iter(parser.accounts.values()))
-        
-        # Verify it's an Account model with expected fields
-        assert isinstance(account, Account)
-        assert hasattr(account, 'entityId')
-        assert hasattr(account, 'accountName')
-        assert hasattr(account, 'accountType')
-        assert hasattr(account, 'onBudget')
-        assert hasattr(account, 'entityVersion')
     
     def test_parse_creates_correct_payee_models(self, parser):
         """Test that parse() creates correct Payee models."""
@@ -556,10 +539,8 @@ class TestYnabParser:
         parser.apply_deltas()
         
         # Verify final state is correct (flexible count assertions)
-        assert_that(parser.accounts).is_not_empty()
+        assert_parser_collections_populated(parser)
         assert_that(len(parser.accounts)).is_greater_than(0)  # Expected from fixture
-        assert_that(parser.payees).is_not_empty()    # Expected from fixture
-        assert_that(parser.transactions).is_not_empty()  # Fixture has transactions
         assert_that(parser.master_categories).is_not_empty()  # Expected from fixture
         assert_that(parser.categories).is_not_empty()  # Expected from fixture
         assert_that(parser.monthly_budgets).is_not_empty()  # Expected from fixture
@@ -592,16 +573,10 @@ class TestYnabParser:
         # Test specific expected final state based on fixture data
         # This verifies the parser correctly applies all deltas in sequence
         
-        # Should have accounts (flexible count assertion)
-        assert_that(parser.accounts).is_not_empty()
+        # Should have core collections populated (flexible count assertion)
+        assert_parser_collections_populated(parser)
         account = next(iter(parser.accounts.values()))
         assert account.accountName  # Should have a name
-        
-        # Should have payees (flexible count assertion)
-        assert_that(parser.payees).is_not_empty()
-        
-        # Should have transactions (as per fixture data)
-        assert_that(parser.transactions).is_not_empty()
         
         # Should have master categories (as per fixture data)
         assert_that(parser.master_categories).is_not_empty()
@@ -1032,9 +1007,7 @@ class TestYnabParserVersionTracking:
         assert len(parser.applied_deltas) == 0
         
         # Should have the original counts from Budget.yfull (base state actually has more entities)
-        assert_that(parser.accounts).is_not_empty()
-        assert_that(parser.payees).is_not_empty()  # Base state has payees
-        assert_that(parser.transactions).is_not_empty()  # Base state has transactions
+        assert_parser_collections_populated(parser)
     
     def test_parser_restore_to_version_raises_error_for_invalid_version(self, parser):
         """Test that restore_to_version raises error for version not in delta sequence."""

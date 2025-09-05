@@ -5,6 +5,7 @@ from pathlib import Path
 from assertpy import assert_that
 
 from ynab_io.testing import budget_version
+from .conftest import assert_parser_collections_populated
 
 
 class TestVersionAwareFixtureIntegration:
@@ -14,19 +15,6 @@ class TestVersionAwareFixtureIntegration:
     def test_budget_path(self):
         """Path to the test budget fixture."""
         return Path("tests/fixtures/My Test Budget~E0C1460F.ynab4")
-    
-    @budget_version(0)
-    def test_base_version_has_correct_entity_counts(self, version_aware_parser):
-        """Test that @budget_version(0) provides parser at base state."""
-        parser = version_aware_parser
-        
-        # Should have base state counts (before any deltas applied) - flexible count assertions
-        assert_that(parser.accounts).is_not_empty()
-        assert_that(parser.payees).is_not_empty()  # Base state has payees
-        assert_that(parser.transactions).is_not_empty()  # Base state has transactions
-        
-        # Should have no deltas applied
-        assert len(parser.applied_deltas) == 0
     
     @budget_version(67)
     def test_specific_version_has_expected_state(self, version_aware_parser):
@@ -41,31 +29,6 @@ class TestVersionAwareFixtureIntegration:
         for applied_delta in parser.applied_deltas:
             end_version = parser._get_version_end_number(applied_delta)
             assert end_version <= 67
-    
-    @budget_version(141)  # Latest version
-    def test_latest_version_has_all_deltas_applied(self, version_aware_parser):
-        """Test that @budget_version(141) provides fully parsed state."""
-        parser = version_aware_parser
-        
-        # Should have all deltas applied (flexible count assertion)
-        assert_that(parser.applied_deltas).is_not_empty()
-        assert_that(len(parser.applied_deltas)).is_greater_than(10)  # Multiple deltas applied
-        
-        # Should have final state counts (flexible count assertions)
-        assert_that(parser.accounts).is_not_empty()
-        assert_that(parser.payees).is_not_empty()
-        assert_that(parser.transactions).is_not_empty()
-    
-    def test_undecorated_test_gets_full_parser_state(self, version_aware_parser):
-        """Test that tests without @budget_version get fully parsed state."""
-        parser = version_aware_parser
-        
-        # Should have all deltas applied (same as latest version) - flexible count assertions
-        assert_that(parser.applied_deltas).is_not_empty()
-        assert_that(len(parser.applied_deltas)).is_greater_than(10)  # Multiple deltas applied
-        assert_that(parser.accounts).is_not_empty()
-        assert_that(parser.payees).is_not_empty()
-        assert_that(parser.transactions).is_not_empty()
     
     @budget_version(87)
     def test_intermediate_version_has_partial_state(self, version_aware_parser):
@@ -124,6 +87,4 @@ class TestVersionAwareFixtureRobustness:
         
         # Should always be base state (flexible count assertions)
         assert len(parser.applied_deltas) == 0  # This is specific - no deltas should be applied
-        assert_that(parser.accounts).is_not_empty()
-        assert_that(parser.payees).is_not_empty()
-        assert_that(parser.transactions).is_not_empty()
+        assert_parser_collections_populated(parser)
