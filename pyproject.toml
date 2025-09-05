@@ -81,3 +81,7 @@ python_version = "3.12"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
+
+[flake8]
+max-line-length = 88
+ignore = ["E501", "W292", "F811", "F541"]

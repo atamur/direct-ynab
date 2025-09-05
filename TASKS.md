@@ -29,15 +29,7 @@ Before marking any task as complete, ALWAYS verify these items:
 
 #### Phase 2: Advanced CLI Reporting
 
-*   **TASK 2.9: (TDD) Create Budget Calculator (src/ynab_io/budget_calculator.py)**
-    *   **GOAL:** Create a `BudgetCalculator` class that takes a `Budget` object and provides calculation methods.
-    *   **APPROACH:** The class will be initialized with a `Budget` object. It will contain methods for calculating account balances and monthly budget summaries.
-    *   **TEST_CASES:** The `BudgetCalculator` is initialized correctly with a `Budget` object.
 
-*   **TASK 2.10: (TDD) Implement Account Balance Calculation in BudgetCalculator**
-    *   **GOAL:** Implement `get_account_balance(account_id)` in `BudgetCalculator`.
-    *   **APPROACH:** The method will iterate through all transactions associated with the given `account_id`. It will sum up the `amount` of each transaction to calculate the total balance. It will also differentiate between cleared and uncleared transactions.
-    *   **TEST_CASES:** Correctly calculates balances for accounts with no transactions, only cleared transactions, only uncleared transactions, and a mix of both.
 
 *   **TASK 2.11: (TDD) Implement Monthly Budget Summary in BudgetCalculator**
     *   **GOAL:** Implement `get_monthly_budget_summary(month)` in `BudgetCalculator`.
@@ -48,6 +40,21 @@ Before marking any task as complete, ALWAYS verify these items:
     *   **GOAL:** Create a new `report` command in the CLI that uses the `BudgetCalculator`.
     *   **APPROACH:** The `report` command will be added to `src/orchestration/cli.py`. It will initialize the `YnabParser`, get the `Budget` object, create a `BudgetCalculator`, and then call the appropriate methods based on the user's arguments (e.g., `report accounts`, `report budget --month 2025-09`).
     *   **TEST_CASES:** The `report` command correctly calls the `BudgetCalculator` methods and displays the formatted output. The `--month` option is correctly parsed.
+
+#### Phase 3: Data Transformation and AI Preparation
+
+### AI Agent Task Backlog : TASKS DONE
+
+#### Phase 2: Advanced CLI Reporting
+
+  * **TASK 2.10: (TDD) Implement Account Balance Calculation in BudgetCalculator** ✅ **COMPLETED**
+      * **GOAL:** Implement `get_account_balance(account_id)` in `BudgetCalculator`.
+      * **APPROACH:** The method will iterate through all transactions associated with the given `account_id`. It will sum up the `amount` of each transaction to calculate the total balance. It will also differentiate between cleared and uncleared transactions.
+      * **TEST_CASES:** Correctly calculates balances for accounts with no transactions, only cleared transactions, only uncleared transactions, and a mix of both.
+      * **COMPLETED:** 2025-09-05 - Implemented `get_account_balance` in `BudgetCalculator` and verified with comprehensive tests. All tests passed, and linting issues were resolved by configuring `flake8` to align with `black`'s formatting.
+      * **LEARNINGS:**
+        - **Linting Configuration**: It's crucial to ensure linting tools (like `flake8`) are correctly configured to match code formatters (like `black`) to avoid unnecessary conflicts. Using a `.flake8` file is a reliable way to achieve this when `pyproject.toml` integration is problematic.
+        - **Automated Formatting**: Tools like `black` are invaluable for maintaining code style and reducing manual linting fixes.
 
 #### Phase 3: Data Transformation and AI Preparation
 
@@ -229,3 +236,11 @@ Before marking any task as complete, ALWAYS verify these items:
         - **Error Handling Hierarchy**: Proper exception type checking order (JSONDecodeError before ValueError) prevents incorrect error categorization
         - **Platform Independence**: Using `errno` module constants instead of hardcoded error numbers ensures cross-platform compatibility
         - **Test Coverage Impact**: Comprehensive error handling tests (26 test cases) validate all error scenarios without requiring extensive integration testing
+
+*   **TASK 2.9: (TDD) Create Budget Calculator (src/ynab_io/budget_calculator.py)** ✅ **COMPLETED**
+    *   **GOAL:** Create a `BudgetCalculator` class that takes a `Budget` object and provides calculation methods.
+    *   **APPROACH:** The class will be initialized with a `Budget` object. It will contain methods for calculating account balances and monthly budget summaries.
+    *   **TEST_CASES:** The `BudgetCalculator` is initialized correctly with a `Budget` object.
+    *   **COMPLETED:** 2025-09-05 - Created the `BudgetCalculator` class in `src/ynab_io/budget_calculator.py` and a corresponding test file `tests/test_budget_calculator.py`. The `BudgetCalculator` is initialized with a `Budget` object. All tests pass.
+    *   **LEARNINGS:**
+        - Running `pytest` from the root directory is crucial for the test environment to correctly identify and import modules from the `src` directory.
