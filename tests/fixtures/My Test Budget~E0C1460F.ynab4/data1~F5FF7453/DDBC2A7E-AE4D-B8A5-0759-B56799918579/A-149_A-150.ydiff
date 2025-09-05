@@ -1,0 +1,42 @@
+{
+  "publishTime": "Fri Sep 5 11:23:29 GMT+0200 2025",
+  "budgetDataGUID": null,
+  "deviceGUID": "DDBC2A7E-AE4D-B8A5-0759-B56799918579",
+  "dataVersion": "4.2",
+  "items": [
+    {
+      "targetAccountId": "380A0C46-49AB-0FBA-3F63-FFAED8C529A1",
+      "transferTransactionId": null,
+      "categoryId": null,
+      "payeeId": "Payee/Transfer:380A0C46-49AB-0FBA-3F63-FFAED8C529A1",
+      "amount": -100,
+      "parentTransactionIdIfMatched": null,
+      "entityVersion": "A-150",
+      "accountId": "D8811082-96E0-A4C2-093F-192F74430299",
+      "isTombstone": false,
+      "madeWithKnowledge": null,
+      "isResolvedConflict": false,
+      "date": "2025-09-05",
+      "memo": "monthy checkout",
+      "twiceAMonthStartDay": 0,
+      "cleared": "Uncleared",
+      "dateEnteredFromSchedule": null,
+      "checkNumber": null,
+      "source": null,
+      "flag": null,
+      "frequency": "Monthly",
+      "importedPayee": null,
+      "subTransactions": null,
+      "matchedTransactions": null,
+      "YNABID": null,
+      "FITID": null,
+      "accepted": true,
+      "entityId": "B1879D32-D03B-E596-3711-192FD6CDAE49",
+      "entityType": "scheduledTransaction"
+    }
+  ],
+  "startVersion": "A-149",
+  "endVersion": "A-150",
+  "shortDeviceId": "A",
+  "formatVersion": null
+}
