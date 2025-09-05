@@ -182,9 +182,9 @@ class TestCLI:
         
         assert result.exit_code == 0
         assert "Budget loaded successfully" in result.stdout
-        assert "Accounts: 1" in result.stdout
-        assert "Payees: 4" in result.stdout
-        assert "Transactions: 3" in result.stdout
+        assert "Accounts: 3" in result.stdout
+        assert "Payees: 13" in result.stdout
+        assert "Transactions: 16" in result.stdout
     
     def test_load_command_invalid_path(self, runner):
         """Test load command with invalid budget path."""

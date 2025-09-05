@@ -114,9 +114,9 @@ class TestYnabParser:
         parser.parse()
         
         # Verify we have expected accounts
-        assert len(parser.accounts) == 1
+        assert len(parser.accounts) == 3
         
-        # Get the single account
+        # Get first account
         account = next(iter(parser.accounts.values()))
         
         # Verify it's an Account model with expected fields
@@ -132,7 +132,7 @@ class TestYnabParser:
         parser.parse()
         
         # Verify we have expected payees
-        assert len(parser.payees) == 4
+        assert len(parser.payees) == 13
         
         # Test a sample payee
         payee = next(iter(parser.payees.values()))
@@ -149,7 +149,7 @@ class TestYnabParser:
         parser.parse()
         
         # Verify we have expected transactions
-        assert len(parser.transactions) == 3
+        assert len(parser.transactions) == 16
         
         # Test a sample transaction
         transaction = next(iter(parser.transactions.values()))
@@ -185,8 +185,8 @@ class TestYnabParser:
         """Test that parse() creates correct Category models."""
         parser.parse()
         
-        # Verify we have expected categories (29 from fixture)
-        assert len(parser.categories) == 29
+        # Verify we have expected categories (31 from fixture)
+        assert len(parser.categories) == 31
         
         # Test a sample category
         category = next(iter(parser.categories.values()))
@@ -203,8 +203,8 @@ class TestYnabParser:
         """Test that parse() creates correct MonthlyBudget models."""
         parser.parse()
         
-        # Verify we have expected monthly budgets (27 from fixture)
-        assert len(parser.monthly_budgets) == 27
+        # Verify we have expected monthly budgets (28 from fixture)
+        assert len(parser.monthly_budgets) == 28
         
         # Test a sample monthly budget
         monthly_budget = next(iter(parser.monthly_budgets.values()))
@@ -260,8 +260,8 @@ class TestYnabParser:
         """Test that _discover_delta_files finds all .ydiff files."""
         delta_files = parser._discover_delta_files()
         
-        # Should find 4 .ydiff files in test fixture
-        assert len(delta_files) == 4
+        # Should find 26 .ydiff files in test fixture
+        assert len(delta_files) == 26
         
         # All should be Path objects ending in .ydiff
         for delta_file in delta_files:
@@ -278,8 +278,9 @@ class TestYnabParser:
             start_version, _ = parser._parse_delta_versions(delta_file.name)
             version_numbers.append(int(start_version.split('-')[1]))
         
-        # Should be sorted in ascending order: [63, 67, 69, 71]
-        assert version_numbers == [63, 67, 69, 71]
+        # Should be sorted in ascending order: all 26 versions
+        expected_versions = [63, 67, 69, 71, 72, 73, 76, 79, 84, 87, 93, 107, 110, 114, 115, 117, 120, 128, 130, 133, 134, 135, 137, 138, 139, 140]
+        assert version_numbers == expected_versions
     
     def test_parse_delta_versions_handles_valid_filenames(self, parser):
         """Test that _parse_delta_versions correctly parses valid delta filenames."""
@@ -343,10 +344,10 @@ class TestYnabParser:
         parser.apply_deltas()
         
         # Verify final versions are as expected from the fixture data
-        # Transaction 44B1567B-7356-48BC-1D3E-FFAED8CD0F8C should have version A-72
-        transaction_72 = parser.transactions.get('44B1567B-7356-48BC-1D3E-FFAED8CD0F8C')
-        assert transaction_72 is not None
-        assert transaction_72.entityVersion == 'A-72'
+        # Transaction 44B1567B-7356-48BC-1D3E-FFAED8CD0F8C should have version A-84
+        transaction_84 = parser.transactions.get('44B1567B-7356-48BC-1D3E-FFAED8CD0F8C')
+        assert transaction_84 is not None
+        assert transaction_84.entityVersion == 'A-84'
     
     def test_apply_delta_handles_tombstone_deletions(self, parser):
         """Test that _apply_delta correctly handles tombstone (deletion) entries."""
@@ -548,12 +549,12 @@ class TestYnabParser:
         parser.apply_deltas()
         
         # Verify final state is correct
-        assert len(parser.accounts) == 1  # Expected from fixture
-        assert len(parser.payees) == 4    # Expected from fixture
-        assert len(parser.transactions) == 3  # Fixture has exactly 3 transactions
+        assert len(parser.accounts) == 3  # Expected from fixture
+        assert len(parser.payees) == 13    # Expected from fixture
+        assert len(parser.transactions) == 16  # Fixture has exactly 16 transactions
         assert len(parser.master_categories) == 7  # Expected from fixture
-        assert len(parser.categories) == 29  # Expected from fixture
-        assert len(parser.monthly_budgets) == 27  # Expected from fixture
+        assert len(parser.categories) == 31  # Expected from fixture
+        assert len(parser.monthly_budgets) == 28  # Expected from fixture
         
         # Verify all entities are proper model instances
         for account in parser.accounts.values():
@@ -583,41 +584,41 @@ class TestYnabParser:
         # Test specific expected final state based on fixture data
         # This verifies the parser correctly applies all deltas in sequence
         
-        # Should have exactly 1 account
-        assert len(parser.accounts) == 1
+        # Should have exactly 3 accounts
+        assert len(parser.accounts) == 3
         account = next(iter(parser.accounts.values()))
         assert account.accountName  # Should have a name
         
-        # Should have exactly 4 payees
-        assert len(parser.payees) == 4
+        # Should have exactly 13 payees
+        assert len(parser.payees) == 13
         
-        # Should have exactly 3 transactions (as per fixture data)
-        assert len(parser.transactions) == 3
+        # Should have exactly 16 transactions (as per fixture data)
+        assert len(parser.transactions) == 16
         
         # Should have exactly 7 master categories (as per fixture data)
         assert len(parser.master_categories) == 7
         
-        # Should have exactly 29 categories (as per fixture data)
-        assert len(parser.categories) == 29
+        # Should have exactly 31 categories (as per fixture data)
+        assert len(parser.categories) == 31
         
-        # Should have exactly 27 monthly budgets (as per fixture data)
-        assert len(parser.monthly_budgets) == 27
+        # Should have exactly 28 monthly budgets (as per fixture data)
+        assert len(parser.monthly_budgets) == 28
         
-        # Verify version numbers are up to date (should reflect latest delta A-72)
+        # Verify version numbers are up to date (should reflect latest delta A-141)
         latest_versions = set()
         for transaction in parser.transactions.values():
             version_num = int(transaction.entityVersion.split('-')[1])
             latest_versions.add(version_num)
         
-        # Should have some entities with version 72 (from latest delta)
-        assert 72 in latest_versions
+        # Should have some entities with version 128 (from latest delta)
+        assert 128 in latest_versions
 
     def test_parse_creates_correct_monthly_category_budget_models(self, parser):
         """Test that parse() initializes monthly_category_budgets collection correctly."""
         parser.parse()
         
-        # Should have empty monthly category budgets collection initialized (no data in fixture)
-        assert len(parser.monthly_category_budgets) == 0
+        # Should have monthly category budgets collection with actual data
+        assert len(parser.monthly_category_budgets) == 3
         assert isinstance(parser.monthly_category_budgets, dict)
         
         # Test that the collection can accept MonthlyCategoryBudget objects

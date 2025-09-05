@@ -68,7 +68,7 @@ class MonthlyCategoryBudget(BaseModel):
     categoryId: str
     parentMonthlyBudgetId: str
     budgeted: float
-    overspendingHandling: str
+    overspendingHandling: Optional[str] = None
     note: Optional[str] = None
 
 class ScheduledTransaction(BaseModel):
