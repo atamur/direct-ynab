@@ -3,7 +3,7 @@ import logging
 from pathlib import Path
 from typing import List, Dict
 
-from .models import Account, Payee, Transaction, MasterCategory, Category, MonthlyBudget, ScheduledTransaction, Budget
+from .models import Account, Payee, Transaction, MasterCategory, Category, MonthlyBudget, MonthlyCategoryBudget, ScheduledTransaction, Budget
 from .device_manager import DeviceManager
 
 class YnabParser:
@@ -24,6 +24,7 @@ class YnabParser:
         self.master_categories: Dict[str, MasterCategory] = {}
         self.categories: Dict[str, Category] = {}
         self.monthly_budgets: Dict[str, MonthlyBudget] = {}
+        self.monthly_category_budgets: Dict[str, MonthlyCategoryBudget] = {}
         self.scheduled_transactions: Dict[str, ScheduledTransaction] = {}
 
     def parse(self) -> Budget:
@@ -37,6 +38,7 @@ class YnabParser:
         self._parse_entities(data.get('payees', []), Payee, self.payees)
         self._parse_entities(data.get('transactions', []), Transaction, self.transactions)
         self._parse_entities(data.get('monthlyBudgets', []), MonthlyBudget, self.monthly_budgets)
+        self._parse_entities(data.get('monthlyCategoryBudgets', []), MonthlyCategoryBudget, self.monthly_category_budgets)
         self._parse_entities(data.get('scheduledTransactions', []), ScheduledTransaction, self.scheduled_transactions)
 
         # Parse master categories with nested categories
@@ -51,6 +53,7 @@ class YnabParser:
             master_categories=list(self.master_categories.values()),
             categories=list(self.categories.values()),
             monthly_budgets=list(self.monthly_budgets.values()),
+            monthly_category_budgets=list(self.monthly_category_budgets.values()),
             scheduled_transactions=list(self.scheduled_transactions.values())
         )
 
@@ -64,7 +67,7 @@ class YnabParser:
         """Parse master categories and their nested subcategories."""
         for master_category_data in master_categories_data:
             # Extract and process nested categories first
-            if 'subCategories' in master_category_data:
+            if 'subCategories' in master_category_data and master_category_data['subCategories'] is not None:
                 for category_data in master_category_data['subCategories']:
                     category = Category(**category_data)
                     self.categories[category.entityId] = category
@@ -77,12 +80,17 @@ class YnabParser:
     def _get_entity_mapping(self, entity_type):
         """Get the collection and model class for a given entity type."""
         entity_mappings = {
+            # Basic entities
             'account': (self.accounts, Account),
             'payee': (self.payees, Payee),
             'transaction': (self.transactions, Transaction),
+            # Category entities
             'masterCategory': (self.master_categories, MasterCategory),
             'category': (self.categories, Category),
+            # Budget entities
             'monthlyBudget': (self.monthly_budgets, MonthlyBudget),
+            'monthlyCategoryBudget': (self.monthly_category_budgets, MonthlyCategoryBudget),
+            # Scheduled transactions
             'scheduledTransaction': (self.scheduled_transactions, ScheduledTransaction)
         }
         return entity_mappings.get(entity_type, (None, None))

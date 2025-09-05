@@ -60,6 +60,17 @@ class MonthlyBudget(BaseModel):
     entityVersion: str
     monthlySubCategoryBudgets: Optional[List[Any]] = None
 
+class MonthlyCategoryBudget(BaseModel):
+    """Monthly category budget allocation within a specific month."""
+    model_config = ConfigDict(extra='ignore')
+    entityId: str
+    entityVersion: str
+    categoryId: str
+    parentMonthlyBudgetId: str
+    budgeted: float
+    overspendingHandling: str
+    note: Optional[str] = None
+
 class ScheduledTransaction(BaseModel):
     """Recurring/scheduled transaction in YNAB4."""
     model_config = ConfigDict(extra='ignore')
@@ -78,4 +89,5 @@ class Budget(BaseModel):
     master_categories: List[MasterCategory]
     categories: List[Category]
     monthly_budgets: List[MonthlyBudget]
+    monthly_category_budgets: List[MonthlyCategoryBudget]
     scheduled_transactions: List[ScheduledTransaction]

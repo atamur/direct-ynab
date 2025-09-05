@@ -6,7 +6,7 @@ from pathlib import Path
 from unittest.mock import mock_open, patch
 
 from ynab_io.parser import YnabParser
-from ynab_io.models import Account, Payee, Transaction, MasterCategory, Category, MonthlyBudget, ScheduledTransaction
+from ynab_io.models import Account, Payee, Transaction, MasterCategory, Category, MonthlyBudget, MonthlyCategoryBudget, ScheduledTransaction
 
 
 class TestYnabParser:
@@ -611,6 +611,162 @@ class TestYnabParser:
         
         # Should have some entities with version 72 (from latest delta)
         assert 72 in latest_versions
+
+    def test_parse_creates_correct_monthly_category_budget_models(self, parser):
+        """Test that parse() initializes monthly_category_budgets collection correctly."""
+        parser.parse()
+        
+        # Should have empty monthly category budgets collection initialized (no data in fixture)
+        assert len(parser.monthly_category_budgets) == 0
+        assert isinstance(parser.monthly_category_budgets, dict)
+        
+        # Test that the collection can accept MonthlyCategoryBudget objects
+        test_mcb = MonthlyCategoryBudget(
+            entityId="MCB/2017-01/TEST-CATEGORY",
+            categoryId="TEST-CATEGORY",
+            budgeted=100.00,
+            overspendingHandling="AffectsBuffer",
+            parentMonthlyBudgetId="MB/2017-01",
+            entityVersion="A-1"
+        )
+        parser.monthly_category_budgets["MCB/2017-01/TEST-CATEGORY"] = test_mcb
+        
+        # Verify it's a MonthlyCategoryBudget model with expected fields
+        assert isinstance(test_mcb, MonthlyCategoryBudget)
+        assert hasattr(test_mcb, 'entityId')
+        assert hasattr(test_mcb, 'categoryId')
+        assert hasattr(test_mcb, 'budgeted')
+        assert hasattr(test_mcb, 'overspendingHandling')
+        assert hasattr(test_mcb, 'parentMonthlyBudgetId')
+        assert hasattr(test_mcb, 'entityVersion')
+        assert hasattr(test_mcb, 'note')
+
+    def test_apply_delta_handles_monthly_category_budget_processing(self, parser):
+        """Test that _apply_delta correctly processes monthly category budget changes."""
+        parser.parse()
+        initial_monthly_category_budget_count = len(parser.monthly_category_budgets)
+        
+        # Create a mock delta with monthly category budget update
+        mock_delta = {
+            "items": [
+                {
+                    "entityId": "MCB/2017-01/TEST-CATEGORY-ID",
+                    "entityType": "monthlyCategoryBudget",
+                    "isTombstone": False,
+                    "entityVersion": "A-999",
+                    "categoryId": "TEST-CATEGORY-ID",
+                    "budgeted": 150.00,
+                    "overspendingHandling": "AffectsBuffer",
+                    "parentMonthlyBudgetId": "MB/2017-01",
+                    "note": "Test budget allocation"
+                }
+            ]
+        }
+        
+        # Apply the mock delta
+        with patch('builtins.open', mock_open(read_data=json.dumps(mock_delta))):
+            parser._apply_delta(Path("test.ydiff"))
+        
+        # Should have added the new monthly category budget
+        assert len(parser.monthly_category_budgets) == initial_monthly_category_budget_count + 1
+        assert "MCB/2017-01/TEST-CATEGORY-ID" in parser.monthly_category_budgets
+        
+        # Verify the properties are correct
+        new_mcb = parser.monthly_category_budgets["MCB/2017-01/TEST-CATEGORY-ID"]
+        assert new_mcb.categoryId == "TEST-CATEGORY-ID"
+        assert new_mcb.budgeted == 150.00
+        assert new_mcb.overspendingHandling == "AffectsBuffer"
+        assert new_mcb.parentMonthlyBudgetId == "MB/2017-01"
+        assert new_mcb.note == "Test budget allocation"
+
+    def test_apply_delta_handles_monthly_category_budget_updates(self, parser):
+        """Test that _apply_delta correctly updates existing monthly category budget entities."""
+        parser.parse()
+        
+        # Add an existing monthly category budget first
+        existing_mcb = MonthlyCategoryBudget(
+            entityId="MCB/2017-01/EXISTING-CATEGORY",
+            categoryId="EXISTING-CATEGORY",
+            budgeted=100.00,
+            overspendingHandling="AffectsBuffer", 
+            parentMonthlyBudgetId="MB/2017-01",
+            entityVersion="A-10",
+            note="Original note"
+        )
+        parser.monthly_category_budgets["MCB/2017-01/EXISTING-CATEGORY"] = existing_mcb
+        
+        # Create a mock delta that updates the existing entity
+        mock_delta = {
+            "items": [
+                {
+                    "entityId": "MCB/2017-01/EXISTING-CATEGORY",
+                    "entityType": "monthlyCategoryBudget",
+                    "isTombstone": False,
+                    "entityVersion": "A-20",  # Higher version
+                    "budgeted": 200.00,  # Updated amount
+                    "note": "Updated note"  # Updated note
+                }
+            ]
+        }
+        
+        # Apply the mock delta
+        with patch('builtins.open', mock_open(read_data=json.dumps(mock_delta))):
+            parser._apply_delta(Path("test.ydiff"))
+        
+        # Should have updated the existing monthly category budget
+        updated_mcb = parser.monthly_category_budgets["MCB/2017-01/EXISTING-CATEGORY"]
+        assert updated_mcb.budgeted == 200.00  # Should be updated
+        assert updated_mcb.note == "Updated note"  # Should be updated
+        assert updated_mcb.entityVersion == "A-20"  # Version should be updated
+        assert updated_mcb.categoryId == "EXISTING-CATEGORY"  # Should remain the same
+        assert updated_mcb.overspendingHandling == "AffectsBuffer"  # Should remain the same
+
+    def test_apply_delta_handles_monthly_category_budget_tombstone_deletions(self, parser):
+        """Test that _apply_delta correctly handles tombstone deletions of monthly category budgets."""
+        parser.parse()
+        
+        # Add a monthly category budget to delete
+        test_mcb = MonthlyCategoryBudget(
+            entityId="MCB/2017-01/DELETE-ME",
+            categoryId="DELETE-ME",
+            budgeted=50.00,
+            overspendingHandling="AffectsBuffer",
+            parentMonthlyBudgetId="MB/2017-01", 
+            entityVersion="A-5"
+        )
+        parser.monthly_category_budgets["MCB/2017-01/DELETE-ME"] = test_mcb
+        
+        # Create a mock delta with tombstone entry
+        mock_delta = {
+            "items": [
+                {
+                    "entityId": "MCB/2017-01/DELETE-ME",
+                    "entityType": "monthlyCategoryBudget",
+                    "isTombstone": True,
+                    "entityVersion": "A-10"
+                }
+            ]
+        }
+        
+        # Apply the mock delta with tombstone
+        with patch('builtins.open', mock_open(read_data=json.dumps(mock_delta))):
+            parser._apply_delta(Path("test.ydiff"))
+        
+        # The entity should be removed
+        assert "MCB/2017-01/DELETE-ME" not in parser.monthly_category_budgets
+
+    def test_final_budget_includes_monthly_category_budgets_collection(self, parser):
+        """Test that the final Budget object includes monthly_category_budgets collection."""
+        # This test should fail initially because Budget object doesn't include monthly_category_budgets
+        budget = parser.parse()
+        
+        # Verify Budget object has monthly_category_budgets attribute
+        assert hasattr(budget, 'monthly_category_budgets')
+        assert isinstance(budget.monthly_category_budgets, list)
+        
+        # Should contain MonthlyCategoryBudget instances (when they exist)
+        for mcb in budget.monthly_category_budgets:
+            assert isinstance(mcb, MonthlyCategoryBudget)
 
 
 class TestYnabParserVersionParsing:
