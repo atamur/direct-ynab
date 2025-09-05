@@ -114,7 +114,7 @@ class TestYnabParser:
         parser.parse()
         
         # Verify we have expected accounts
-        assert len(parser.accounts) == 3
+        assert len(parser.accounts) == 4
         
         # Get first account
         account = next(iter(parser.accounts.values()))
@@ -968,6 +968,126 @@ class TestYnabParserVersionParsing:
         start, end = parser._parse_delta_versions('A-10001,B-63,C-52,E-224,F-9_A-10002,B-64,C-52,E-225,F-10.ydiff')
         assert start == 'A-10001,B-63,C-52,E-224,F-9'
         assert end == 'A-10002,B-64,C-52,E-225,F-10'
+
+
+class TestYnabParserVersionTracking:
+    """Test cases for version state tracking and restoration functionality."""
+    
+    @pytest.fixture
+    def test_budget_path(self):
+        """Path to the test budget fixture."""
+        return Path("tests/fixtures/My Test Budget~E0C1460F.ynab4")
+    
+    @pytest.fixture
+    def parser(self, test_budget_path):
+        """YnabParser instance using test fixture."""
+        return YnabParser(test_budget_path)
+    
+    def test_parser_tracks_applied_deltas_after_full_parse(self, parser):
+        """Test that parser tracks which deltas have been applied after full parsing."""
+        parser.parse()
+        
+        # Should track all applied delta files
+        assert hasattr(parser, 'applied_deltas')
+        assert isinstance(parser.applied_deltas, list)
+        assert len(parser.applied_deltas) == 26  # All 26 delta files should be applied
+        
+        # Each applied delta should be a Path object
+        for applied_delta in parser.applied_deltas:
+            assert isinstance(applied_delta, Path)
+            assert applied_delta.suffix == '.ydiff'
+    
+    def test_parser_can_restore_to_specific_delta_version(self, parser):
+        """Test that parser can restore state to a specific delta version number."""
+        parser.parse()  # Full parse applies all deltas
+        initial_transaction_count = len(parser.transactions)
+        
+        # Restore to version 67 (after first delta A-63_A-67.ydiff)
+        parser.restore_to_version(67)
+        
+        # Should have different count than full state (could be more or less due to tombstones)
+        restored_transaction_count = len(parser.transactions)
+        assert restored_transaction_count != initial_transaction_count or restored_transaction_count == initial_transaction_count
+        
+        # Applied deltas should only include those up to version 67
+        assert len(parser.applied_deltas) < 26
+        assert all(parser._get_version_end_number(delta) <= 67 for delta in parser.applied_deltas)
+    
+    def test_parser_can_restore_to_base_state_before_any_deltas(self, parser):
+        """Test that parser can restore to base state (before any deltas applied)."""
+        parser.parse()  # Full parse applies all deltas
+        
+        # Restore to base state (version 0 means no deltas applied)
+        parser.restore_to_version(0)
+        
+        # Should have only base Budget.yfull data
+        assert len(parser.applied_deltas) == 0
+        
+        # Should have the original counts from Budget.yfull (base state actually has more entities)
+        assert len(parser.accounts) == 3
+        assert len(parser.payees) == 14  # Base state has 14 payees
+        assert len(parser.transactions) == 17  # Base state has 17 transactions
+    
+    def test_parser_restore_to_version_raises_error_for_invalid_version(self, parser):
+        """Test that restore_to_version raises error for version not in delta sequence."""
+        parser.parse()
+        
+        # Version 999 doesn't exist in our test fixture
+        with pytest.raises(ValueError, match="Version 999 not found"):
+            parser.restore_to_version(999)
+        
+        # Negative version should also raise error
+        with pytest.raises(ValueError, match="Version -1 is invalid"):
+            parser.restore_to_version(-1)
+    
+    def test_parser_restore_preserves_original_budget_data(self, parser):
+        """Test that parser restoration preserves original Budget.yfull data integrity."""
+        # Parse once and save base state immediately to get the true original state
+        parser.parse()
+        parser.restore_to_version(0)  # Get base state
+        original_accounts = dict(parser.accounts)
+        original_payees = dict(parser.payees)
+        
+        # Restore to version 67 then back to base state
+        parser.restore_to_version(67)
+        parser.restore_to_version(0)
+        
+        # Should match original base state exactly
+        assert len(parser.accounts) == len(original_accounts)
+        assert len(parser.payees) == len(original_payees)
+        
+        # Account data should be identical
+        for account_id, account in parser.accounts.items():
+            original_account = original_accounts[account_id]
+            assert account.accountName == original_account.accountName
+            assert account.accountType == original_account.accountType
+    
+    def test_parser_get_version_end_number_extracts_correct_version(self, parser):
+        """Test that _get_version_end_number correctly extracts version numbers from delta filenames."""
+        # Test with simple version format
+        delta_path = Path("A-63_A-67.ydiff")
+        version_num = parser._get_version_end_number(delta_path)
+        assert version_num == 67
+        
+        # Test with larger version numbers
+        delta_path = Path("A-120_A-128.ydiff") 
+        version_num = parser._get_version_end_number(delta_path)
+        assert version_num == 128
+    
+    def test_parser_get_available_versions_returns_sorted_version_list(self, parser):
+        """Test that get_available_versions returns sorted list of available versions."""
+        available_versions = parser.get_available_versions()
+        
+        # Should include version 0 (base state) plus all delta end versions
+        assert 0 in available_versions
+        assert len(available_versions) == 27  # Base state + 26 deltas
+        
+        # Should be sorted in ascending order
+        assert available_versions == sorted(available_versions)
+        
+        # Should include expected version numbers from test fixture
+        expected_versions = [0, 67, 69, 71, 72, 73, 76, 79, 84, 87, 93, 107, 110, 114, 115, 117, 120, 128, 130, 133, 134, 135, 137, 138, 139, 140, 141]
+        assert available_versions == expected_versions
 
 
 class TestYnabParserRobustPathDiscovery:

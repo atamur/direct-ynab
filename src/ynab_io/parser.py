@@ -1,7 +1,8 @@
+import copy
 import json
 import logging
 from pathlib import Path
-from typing import List, Dict
+from typing import List, Dict, Any
 
 from .models import (
     Account,
@@ -38,7 +39,46 @@ class YnabParser:
         self.monthly_category_budgets: Dict[str, MonthlyCategoryBudget] = {}
         self.scheduled_transactions: Dict[str, ScheduledTransaction] = {}
 
+        # Version tracking state
+        self.applied_deltas: List[Path] = []
+        self._base_state: Dict = {}
+
     def parse(self) -> Budget:
+        """Parse the budget and apply all available deltas.
+
+        Returns:
+            Budget object at the latest version state
+        """
+        return self._parse_with_delta_strategy(lambda: self.apply_deltas())
+
+    def parse_up_to_version(self, target_version: int) -> Budget:
+        """Parse the budget and apply deltas only up to the specified version.
+
+        This method provides version isolation by only parsing and applying deltas
+        up to the target version, never processing newer deltas that might contain
+        unsupported data types.
+
+        Args:
+            target_version: Version number to parse up to (0 = base state only)
+
+        Returns:
+            Budget object at the specified version state
+        """
+        def delta_strategy():
+            if target_version > 0:
+                self._apply_deltas_up_to_version(target_version)
+
+        return self._parse_with_delta_strategy(delta_strategy)
+
+    def _parse_with_delta_strategy(self, delta_strategy_func) -> Budget:
+        """Parse base budget data and apply deltas using the provided strategy.
+
+        Args:
+            delta_strategy_func: Function that applies deltas according to specific strategy
+
+        Returns:
+            Budget object in the state after applying the delta strategy
+        """
         device_guid = self.device_manager.get_active_device_guid()
         yfull_path = self.device_manager.get_budget_file_path(device_guid)
         with open(yfull_path, "r") as f:
@@ -66,9 +106,21 @@ class YnabParser:
 
         # Parse master categories with nested categories
         self._parse_master_categories(data.get("masterCategories", []))
+        
+        # Save base state before applying deltas
+        self._save_base_state()
 
-        self.apply_deltas()
+        # Apply deltas using the provided strategy
+        delta_strategy_func()
 
+        return self._create_budget_object()
+
+    def _create_budget_object(self) -> Budget:
+        """Create a Budget object from the current parser state.
+
+        Returns:
+            Budget object containing all parsed entities
+        """
         return Budget(
             accounts=list(self.accounts.values()),
             payees=list(self.payees.values()),
@@ -130,6 +182,7 @@ class YnabParser:
         delta_files = self._discover_delta_files()
         for delta_file in delta_files:
             self._apply_delta(delta_file)
+            self.applied_deltas.append(delta_file)
 
     def _discover_delta_files(self) -> List[Path]:
         ydiff_files = list(self.device_dir.glob("*.ydiff"))
@@ -214,3 +267,108 @@ class YnabParser:
                     collection[entity_id] = model(**updated_data)
             else:
                 collection[entity_id] = model(**item)
+
+    def _save_base_state(self):
+        """Save the current state as the base state (before any deltas)."""
+        self._base_state = self._capture_current_state()
+
+    def restore_to_version(self, target_version: int):
+        """Restore parser state to a specific version number.
+
+        Args:
+            target_version: Version number to restore to (0 = base state)
+
+        Raises:
+            ValueError: If target_version is invalid or not available
+        """
+        self._validate_target_version(target_version)
+
+        # Restore to base state first
+        self._restore_from_state(self._base_state)
+        self.applied_deltas = []
+
+        # If target version is 0, we're done (base state)
+        if target_version == 0:
+            return
+
+        # Apply deltas up to target version
+        self._apply_deltas_up_to_version(target_version)
+
+    def _get_version_end_number(self, delta_path: Path) -> int:
+        """Extract the end version number from a delta filename."""
+        _, end_version = self._parse_delta_versions(delta_path.name)
+        return self._get_version_number_from_composite(end_version, f"delta file '{delta_path.name}'")
+
+    def get_available_versions(self) -> List[int]:
+        """Get sorted list of available version numbers."""
+        versions = [0]  # Base state version
+
+        delta_files = self._discover_delta_files()
+        for delta_file in delta_files:
+            end_version = self._get_version_end_number(delta_file)
+            versions.append(end_version)
+
+        return sorted(versions)
+
+    def _capture_current_state(self) -> Dict[str, Any]:
+        """Capture the current parser state as a deep copy.
+
+        Returns:
+            Dictionary containing deep copies of all entity collections
+        """
+        return {
+            'accounts': copy.deepcopy(self.accounts),
+            'payees': copy.deepcopy(self.payees),
+            'transactions': copy.deepcopy(self.transactions),
+            'master_categories': copy.deepcopy(self.master_categories),
+            'categories': copy.deepcopy(self.categories),
+            'monthly_budgets': copy.deepcopy(self.monthly_budgets),
+            'monthly_category_budgets': copy.deepcopy(self.monthly_category_budgets),
+            'scheduled_transactions': copy.deepcopy(self.scheduled_transactions)
+        }
+
+    def _restore_from_state(self, state: Dict[str, Any]):
+        """Restore parser collections from a saved state.
+
+        Args:
+            state: Dictionary containing entity collections to restore
+        """
+        self.accounts = copy.deepcopy(state['accounts'])
+        self.payees = copy.deepcopy(state['payees'])
+        self.transactions = copy.deepcopy(state['transactions'])
+        self.master_categories = copy.deepcopy(state['master_categories'])
+        self.categories = copy.deepcopy(state['categories'])
+        self.monthly_budgets = copy.deepcopy(state['monthly_budgets'])
+        self.monthly_category_budgets = copy.deepcopy(state['monthly_category_budgets'])
+        self.scheduled_transactions = copy.deepcopy(state['scheduled_transactions'])
+
+    def _validate_target_version(self, target_version: int):
+        """Validate that target version is valid and available.
+
+        Args:
+            target_version: Version number to validate
+
+        Raises:
+            ValueError: If target_version is invalid or not available
+        """
+        if target_version < 0:
+            raise ValueError(f"Version {target_version} is invalid: version must be non-negative")
+
+        available_versions = self.get_available_versions()
+        if target_version not in available_versions:
+            raise ValueError(f"Version {target_version} not found in available versions: {available_versions}")
+
+    def _apply_deltas_up_to_version(self, target_version: int):
+        """Apply delta files up to the specified target version.
+
+        Args:
+            target_version: Version number to apply deltas up to
+        """
+        delta_files = self._discover_delta_files()
+        for delta_file in delta_files:
+            end_version = self._get_version_end_number(delta_file)
+            if end_version <= target_version:
+                self._apply_delta(delta_file)
+                self.applied_deltas.append(delta_file)
+            else:
+                break
