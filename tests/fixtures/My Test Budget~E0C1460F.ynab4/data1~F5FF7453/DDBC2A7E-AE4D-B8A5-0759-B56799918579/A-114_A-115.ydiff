@@ -1,0 +1,40 @@
+{
+  "endVersion": "A-115",
+  "dataVersion": "4.2",
+  "publishTime": "Fri Sep 5 10:32:50 GMT+0200 2025",
+  "shortDeviceId": "A",
+  "formatVersion": null,
+  "items": [
+    {
+      "payeeId": "18724A53-AC75-2A52-F28C-19009E1DBC61",
+      "amount": -23.95,
+      "parentTransactionIdIfMatched": null,
+      "accountId": "AFBB4F1B-612E-EFEA-8ACE-1900155D83A7",
+      "entityVersion": "A-115",
+      "isTombstone": false,
+      "madeWithKnowledge": null,
+      "isResolvedConflict": false,
+      "memo": "merchantName=Uniqlo Lyon Part Dieu | merchantPlace=Lyon | isOnline=False",
+      "cleared": "Cleared",
+      "dateEnteredFromSchedule": null,
+      "date": "2025-08-23",
+      "checkNumber": null,
+      "flag": null,
+      "source": "Imported",
+      "importedPayee": "UNIQLO",
+      "subTransactions": null,
+      "matchedTransactions": null,
+      "YNABID": "YNAB:-23.95:2025-08-23:1",
+      "FITID": null,
+      "accepted": true,
+      "entityId": "Transaction/YNAB:-23.95:2025-08-23:1",
+      "entityType": "transaction",
+      "transferTransactionId": null,
+      "categoryId": null,
+      "targetAccountId": null
+    }
+  ],
+  "deviceGUID": "DDBC2A7E-AE4D-B8A5-0759-B56799918579",
+  "budgetDataGUID": null,
+  "startVersion": "A-114"
+}

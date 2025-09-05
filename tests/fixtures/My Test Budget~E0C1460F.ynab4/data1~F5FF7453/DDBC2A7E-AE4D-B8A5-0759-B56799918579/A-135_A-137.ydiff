@@ -1,0 +1,40 @@
+{
+  "shortDeviceId": "A",
+  "startVersion": "A-135",
+  "endVersion": "A-137",
+  "deviceGUID": "DDBC2A7E-AE4D-B8A5-0759-B56799918579",
+  "publishTime": "Fri Sep 5 10:39:19 GMT+0200 2025",
+  "budgetDataGUID": null,
+  "formatVersion": null,
+  "dataVersion": "4.2",
+  "items": [
+    {
+      "entityType": "category",
+      "note": null,
+      "name": "New Category",
+      "type": "OUTFLOW",
+      "cachedBalance": null,
+      "masterCategoryId": "D91F0225-1603-14BC-58DD-19077D6359E4",
+      "isTombstone": false,
+      "entityVersion": "A-136",
+      "madeWithKnowledge": null,
+      "isResolvedConflict": false,
+      "entityId": "C7B795BA-8D9A-4E3D-1759-1907A2F7F449",
+      "sortableIndex": 0
+    },
+    {
+      "entityType": "masterCategory",
+      "note": null,
+      "expanded": true,
+      "name": "Long term",
+      "type": "OUTFLOW",
+      "deleteable": true,
+      "isTombstone": false,
+      "entityVersion": "A-137",
+      "madeWithKnowledge": null,
+      "isResolvedConflict": false,
+      "entityId": "D91F0225-1603-14BC-58DD-19077D6359E4",
+      "sortableIndex": 1811939327
+    }
+  ]
+}

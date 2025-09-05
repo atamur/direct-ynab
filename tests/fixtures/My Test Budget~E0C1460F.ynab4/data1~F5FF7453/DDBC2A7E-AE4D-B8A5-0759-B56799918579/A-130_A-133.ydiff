@@ -1,0 +1,54 @@
+{
+  "shortDeviceId": "A",
+  "startVersion": "A-130",
+  "endVersion": "A-133",
+  "deviceGUID": "DDBC2A7E-AE4D-B8A5-0759-B56799918579",
+  "publishTime": "Fri Sep 5 10:38:57 GMT+0200 2025",
+  "budgetDataGUID": null,
+  "formatVersion": null,
+  "dataVersion": "4.2",
+  "items": [
+    {
+      "entityType": "masterCategory",
+      "note": null,
+      "expanded": true,
+      "name": "Giving",
+      "type": "OUTFLOW",
+      "deleteable": true,
+      "isTombstone": true,
+      "entityVersion": "A-131",
+      "madeWithKnowledge": null,
+      "isResolvedConflict": false,
+      "entityId": "A4",
+      "sortableIndex": 1879048191
+    },
+    {
+      "entityType": "category",
+      "note": null,
+      "name": "Giving ` Tithing ` A4",
+      "type": "OUTFLOW",
+      "cachedBalance": 0,
+      "masterCategoryId": "MasterCategory/__Hidden__",
+      "isTombstone": false,
+      "entityVersion": "A-132",
+      "madeWithKnowledge": null,
+      "isResolvedConflict": false,
+      "entityId": "A5",
+      "sortableIndex": 1073741823
+    },
+    {
+      "entityType": "category",
+      "note": null,
+      "name": "Giving ` Charitable ` A4",
+      "type": "OUTFLOW",
+      "cachedBalance": 0,
+      "masterCategoryId": "MasterCategory/__Hidden__",
+      "isTombstone": false,
+      "entityVersion": "A-133",
+      "madeWithKnowledge": null,
+      "isResolvedConflict": false,
+      "entityId": "A6",
+      "sortableIndex": 1610612735
+    }
+  ]
+}

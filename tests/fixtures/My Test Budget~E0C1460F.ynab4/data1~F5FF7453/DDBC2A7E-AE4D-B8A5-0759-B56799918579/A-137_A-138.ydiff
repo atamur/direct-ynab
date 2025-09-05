@@ -1,0 +1,26 @@
+{
+  "shortDeviceId": "A",
+  "startVersion": "A-137",
+  "endVersion": "A-138",
+  "deviceGUID": "DDBC2A7E-AE4D-B8A5-0759-B56799918579",
+  "publishTime": "Fri Sep 5 10:39:24 GMT+0200 2025",
+  "budgetDataGUID": null,
+  "formatVersion": null,
+  "dataVersion": "4.2",
+  "items": [
+    {
+      "entityType": "category",
+      "note": null,
+      "name": "Plans",
+      "type": "OUTFLOW",
+      "cachedBalance": null,
+      "masterCategoryId": "D91F0225-1603-14BC-58DD-19077D6359E4",
+      "isTombstone": false,
+      "entityVersion": "A-138",
+      "madeWithKnowledge": null,
+      "isResolvedConflict": false,
+      "entityId": "C7B795BA-8D9A-4E3D-1759-1907A2F7F449",
+      "sortableIndex": 0
+    }
+  ]
+}

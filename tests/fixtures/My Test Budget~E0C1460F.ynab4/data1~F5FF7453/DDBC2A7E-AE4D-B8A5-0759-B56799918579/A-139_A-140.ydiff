@@ -1,0 +1,25 @@
+{
+  "shortDeviceId": "A",
+  "startVersion": "A-139",
+  "endVersion": "A-140",
+  "deviceGUID": "DDBC2A7E-AE4D-B8A5-0759-B56799918579",
+  "publishTime": "Fri Sep 5 10:39:43 GMT+0200 2025",
+  "budgetDataGUID": null,
+  "formatVersion": null,
+  "dataVersion": "4.2",
+  "items": [
+    {
+      "entityType": "monthlyCategoryBudget",
+      "categoryId": "C7B795BA-8D9A-4E3D-1759-1907A2F7F449",
+      "budgeted": 0,
+      "overspendingHandling": null,
+      "isTombstone": false,
+      "entityVersion": "A-140",
+      "madeWithKnowledge": null,
+      "isResolvedConflict": false,
+      "note": "don't forget!",
+      "entityId": "MCB/2025-08/C7B795BA-8D9A-4E3D-1759-1907A2F7F449",
+      "parentMonthlyBudgetId": "MB/2025-08"
+    }
+  ]
+}

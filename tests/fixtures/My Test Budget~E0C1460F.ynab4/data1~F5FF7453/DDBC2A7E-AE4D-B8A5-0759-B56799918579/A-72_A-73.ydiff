@@ -1,0 +1,22 @@
+{
+  "startVersion": "A-72",
+  "deviceGUID": "DDBC2A7E-AE4D-B8A5-0759-B56799918579",
+  "endVersion": "A-73",
+  "shortDeviceId": "A",
+  "formatVersion": null,
+  "publishTime": "Tue Sep 2 18:23:54 GMT+0200 2025",
+  "budgetDataGUID": null,
+  "items": [
+    {
+      "isTombstone": false,
+      "entityVersion": "A-73",
+      "madeWithKnowledge": null,
+      "isResolvedConflict": false,
+      "month": "2026-10-01",
+      "entityType": "monthlyBudget",
+      "entityId": "MB/2026-10",
+      "note": null
+    }
+  ],
+  "dataVersion": "4.2"
+}

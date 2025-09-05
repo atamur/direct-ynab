@@ -1,0 +1,26 @@
+{
+  "shortDeviceId": "A",
+  "startVersion": "A-134",
+  "endVersion": "A-135",
+  "deviceGUID": "DDBC2A7E-AE4D-B8A5-0759-B56799918579",
+  "publishTime": "Fri Sep 5 10:39:13 GMT+0200 2025",
+  "budgetDataGUID": null,
+  "formatVersion": null,
+  "dataVersion": "4.2",
+  "items": [
+    {
+      "entityType": "masterCategory",
+      "note": null,
+      "expanded": true,
+      "name": "Long term",
+      "type": "OUTFLOW",
+      "deleteable": true,
+      "isTombstone": false,
+      "entityVersion": "A-135",
+      "madeWithKnowledge": null,
+      "isResolvedConflict": false,
+      "entityId": "D91F0225-1603-14BC-58DD-19077D6359E4",
+      "sortableIndex": 1811939327
+    }
+  ]
+}

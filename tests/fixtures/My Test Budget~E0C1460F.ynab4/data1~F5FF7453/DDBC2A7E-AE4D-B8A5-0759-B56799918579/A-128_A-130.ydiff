@@ -1,0 +1,40 @@
+{
+  "shortDeviceId": "A",
+  "startVersion": "A-128",
+  "endVersion": "A-130",
+  "deviceGUID": "DDBC2A7E-AE4D-B8A5-0759-B56799918579",
+  "publishTime": "Fri Sep 5 10:38:50 GMT+0200 2025",
+  "budgetDataGUID": null,
+  "formatVersion": null,
+  "dataVersion": "4.2",
+  "items": [
+    {
+      "entityType": "masterCategory",
+      "note": null,
+      "expanded": true,
+      "name": "Pre-YNAB Debt",
+      "type": "OUTFLOW",
+      "deleteable": true,
+      "isTombstone": true,
+      "entityVersion": "A-129",
+      "madeWithKnowledge": null,
+      "isResolvedConflict": false,
+      "entityId": "MasterCategory/__PreYNABDebtMaster__",
+      "sortableIndex": 536870911
+    },
+    {
+      "entityType": "category",
+      "note": null,
+      "name": "Pre-YNAB Debt ` credit card ` MasterCategory/__PreYNABDebtMaster__",
+      "type": "OUTFLOW",
+      "cachedBalance": 0,
+      "masterCategoryId": "MasterCategory/__Hidden__",
+      "isTombstone": false,
+      "entityVersion": "A-130",
+      "madeWithKnowledge": null,
+      "isResolvedConflict": false,
+      "entityId": "Category/PreYNABDebt/AFBB4F1B-612E-EFEA-8ACE-1900155D83A7",
+      "sortableIndex": 0
+    }
+  ]
+}
