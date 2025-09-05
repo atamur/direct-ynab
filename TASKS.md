@@ -27,6 +27,28 @@ Before marking any task as complete, ALWAYS verify these items:
 
 **CURRENT STATUS:** Phase 1 and Phase 2 completed with comprehensive TDD implementation
 
+#### Phase 2: Advanced CLI Reporting
+
+*   **TASK 2.9: (TDD) Create Budget Calculator (src/ynab_io/budget_calculator.py)**
+    *   **GOAL:** Create a `BudgetCalculator` class that takes a `Budget` object and provides calculation methods.
+    *   **APPROACH:** The class will be initialized with a `Budget` object. It will contain methods for calculating account balances and monthly budget summaries.
+    *   **TEST_CASES:** The `BudgetCalculator` is initialized correctly with a `Budget` object.
+
+*   **TASK 2.10: (TDD) Implement Account Balance Calculation in BudgetCalculator**
+    *   **GOAL:** Implement `get_account_balance(account_id)` in `BudgetCalculator`.
+    *   **APPROACH:** The method will iterate through all transactions associated with the given `account_id`. It will sum up the `amount` of each transaction to calculate the total balance. It will also differentiate between cleared and uncleared transactions.
+    *   **TEST_CASES:** Correctly calculates balances for accounts with no transactions, only cleared transactions, only uncleared transactions, and a mix of both.
+
+*   **TASK 2.11: (TDD) Implement Monthly Budget Summary in BudgetCalculator**
+    *   **GOAL:** Implement `get_monthly_budget_summary(month)` in `BudgetCalculator`.
+    *   **APPROACH:** The method will take a month string (e.g., "2025-09"). It will find the corresponding `MonthlyBudget` and then, for each category, it will find the `MonthlyCategoryBudget` to get the budgeted amount. It will also iterate through all transactions in that month to calculate the total outflow for each category.
+    *   **TEST_CASES:** Correctly calculates budget summaries for different months. Handles categories with no transactions. Correctly calculates outflows.
+
+*   **TASK 2.12: (TDD) Integrate BudgetCalculator into CLI**
+    *   **GOAL:** Create a new `report` command in the CLI that uses the `BudgetCalculator`.
+    *   **APPROACH:** The `report` command will be added to `src/orchestration/cli.py`. It will initialize the `YnabParser`, get the `Budget` object, create a `BudgetCalculator`, and then call the appropriate methods based on the user's arguments (e.g., `report accounts`, `report budget --month 2025-09`).
+    *   **TEST_CASES:** The `report` command correctly calls the `BudgetCalculator` methods and displays the formatted output. The `--month` option is correctly parsed.
+
 #### Phase 3: Data Transformation and AI Preparation
 
   * **TASK 3.1: (TDD) Transform to Tabular Format (src/categorization/transformer.py)**
