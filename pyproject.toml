@@ -67,8 +67,7 @@ omit = [
 ]
 
 [tool.coverage.report]
-# Target 85% overall coverage (current baseline)
-fail_under = 85
+fail_under = 90
 show_missing = true
 skip_covered = false
 exclude_lines = [
