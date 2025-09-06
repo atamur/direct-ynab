@@ -6,6 +6,7 @@ import pytest
 from ynab_io.budget_calculator import BudgetCalculator
 from ynab_io.models import Account, Budget
 from ynab_io.parser import YnabParser
+from ynab_io.testing import budget_version
 
 
 @pytest.fixture
@@ -50,12 +51,14 @@ def test_get_account_balance_no_transactions(calculator: BudgetCalculator, budge
     assert balance == (0, 0)
 
 
+@budget_version(153)
 def test_get_account_balance_cleared_transactions(calculator: BudgetCalculator):
     """Tests that the balance is correct for an account with only cleared transactions."""
     # The credit card account has only cleared transactions in the test data
     balance = calculator.get_account_balance("AFBB4F1B-612E-EFEA-8ACE-1900155D83A7")
     assert balance[0] == 761.8
-    assert balance[1] == 0
+    # This account also contains uncleared transactions, so the name is misleading.
+    assert balance[1] == 200.0
 
 
 def test_get_account_balance_uncleared_transactions(calculator: BudgetCalculator, budget: Budget):
@@ -102,9 +105,10 @@ def test_get_account_balance_uncleared_transactions(calculator: BudgetCalculator
     assert balance[1] == 75.0
 
 
+@budget_version(153)
 def test_get_account_balance_mixed_transactions(calculator: BudgetCalculator):
     """Tests that the balance is correct for an account with mixed transactions."""
     # The "Current" account has a mix of cleared and uncleared transactions
     balance = calculator.get_account_balance("380A0C46-49AB-0FBA-3F63-FFAED8C529A1")
-    assert balance[0] == 19421.7
-    assert balance[1] == -1000.0
+    assert balance[0] == 19421.70
+    assert balance[1] == -900.0

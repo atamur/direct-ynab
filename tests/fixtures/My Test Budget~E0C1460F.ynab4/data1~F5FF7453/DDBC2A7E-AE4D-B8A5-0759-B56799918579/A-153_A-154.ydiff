@@ -1,0 +1,40 @@
+{
+  "shortDeviceId": "A",
+  "startVersion": "A-153",
+  "endVersion": "A-154",
+  "deviceGUID": "DDBC2A7E-AE4D-B8A5-0759-B56799918579",
+  "publishTime": "Sat Sep 6 11:23:34 GMT+0200 2025",
+  "budgetDataGUID": null,
+  "formatVersion": null,
+  "dataVersion": "4.2",
+  "items": [
+    {
+      "entityType": "transaction",
+      "entityId": "Transaction/YNAB:-37.45:2025-08-23:1",
+      "targetAccountId": null,
+      "transferTransactionId": null,
+      "categoryId": null,
+      "payeeId": "A208B6DA-B5E1-C414-CB16-19009E1F2123",
+      "amount": -37.45,
+      "date": "2025-08-23",
+      "isTombstone": false,
+      "accountId": "AFBB4F1B-612E-EFEA-8ACE-1900155D83A7",
+      "entityVersion": "A-154",
+      "madeWithKnowledge": null,
+      "isResolvedConflict": false,
+      "parentTransactionIdIfMatched": null,
+      "memo": "merchantName=MUJI LYON LA PART DIEU | merchantPlace=Lyon | isOnline=False",
+      "cleared": "Cleared",
+      "source": "Imported",
+      "dateEnteredFromSchedule": null,
+      "checkNumber": null,
+      "flag": null,
+      "importedPayee": "Muji Lyon La Part Dieu",
+      "accepted": true,
+      "subTransactions": null,
+      "matchedTransactions": null,
+      "YNABID": "YNAB:-37.45:2025-08-23:1",
+      "FITID": null
+    }
+  ]
+}
