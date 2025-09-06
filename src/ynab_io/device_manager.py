@@ -8,12 +8,11 @@ This module handles:
 """
 
 import json
-import uuid
 import re
-from pathlib import Path
-from typing import Dict, Any, List, Tuple, Optional
+import uuid
 from datetime import datetime
-
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
 # Constants for YNAB4 device management
 DEFAULT_YNAB_VERSION = "Desktop version: YNAB 4 v4.3.857"
@@ -56,9 +55,7 @@ class DeviceManager:
         devices_dir = self._get_devices_dir()
         ydevice_path = devices_dir / f"{short_id}.ydevice"
         if not ydevice_path.exists():
-            raise FileNotFoundError(
-                f"Could not find .ydevice file for short_id {short_id}"
-            )
+            raise FileNotFoundError(f"Could not find .ydevice file for short_id {short_id}")
         return ydevice_path
 
     def get_ydevice_file_path(self, short_id: str) -> Path:
@@ -120,9 +117,7 @@ class DeviceManager:
 
         return device_knowledges
 
-    def _find_device_with_latest_knowledge(
-        self, device_knowledges: Dict[str, str]
-    ) -> str:
+    def _find_device_with_latest_knowledge(self, device_knowledges: Dict[str, str]) -> str:
         """Find the device GUID with the latest knowledge version.
 
         Args:
@@ -187,9 +182,7 @@ class DeviceManager:
         data_dir = self.get_data_dir_path()
         device_dir = data_dir / device_guid
         if not device_dir.exists():
-            raise FileNotFoundError(
-                f"Could not find device directory for GUID {device_guid}"
-            )
+            raise FileNotFoundError(f"Could not find device directory for GUID {device_guid}")
         return device_dir
 
     def get_budget_file_path(self, device_guid: str) -> Path:
@@ -362,9 +355,7 @@ class DeviceManager:
             ValueError: If format is invalid
         """
         if not isinstance(version_str, str):
-            raise ValueError(
-                f"Version string must be a string, got {type(version_str)}"
-            )
+            raise ValueError(f"Version string must be a string, got {type(version_str)}")
 
         match = VERSION_PATTERN.match(version_str)
         if not match:
@@ -413,9 +404,7 @@ class DeviceManager:
             else:
                 return 0
 
-    def parse_composite_knowledge_string(
-        self, composite_str: str
-    ) -> List[Tuple[str, int]]:
+    def parse_composite_knowledge_string(self, composite_str: str) -> List[Tuple[str, int]]:
         """Parse composite knowledge string like 'A-11429,B-63,C-52'.
 
         Handles both single version strings (e.g., 'A-86') and composite
@@ -439,9 +428,7 @@ class DeviceManager:
             [('A', 11429), ('B', 63), ('C', 52)]
         """
         if not isinstance(composite_str, str):
-            raise ValueError(
-                f"Knowledge string must be a string, got {type(composite_str)}"
-            )
+            raise ValueError(f"Knowledge string must be a string, got {type(composite_str)}")
 
         composite_str = composite_str.strip()
         if not composite_str:
@@ -453,13 +440,9 @@ class DeviceManager:
             return [(device_id, version_num)]
 
         # Split by comma and parse each version
-        version_parts = [
-            part.strip() for part in composite_str.split(",") if part.strip()
-        ]
+        version_parts = [part.strip() for part in composite_str.split(",") if part.strip()]
         if not version_parts:
-            raise ValueError(
-                "No valid version parts found in composite knowledge string"
-            )
+            raise ValueError("No valid version parts found in composite knowledge string")
 
         parsed_versions = []
         for version_part in version_parts:
@@ -467,9 +450,7 @@ class DeviceManager:
                 device_id, version_num = self.parse_version_string(version_part)
                 parsed_versions.append((device_id, version_num))
             except ValueError as e:
-                raise ValueError(
-                    f"Invalid version part '{version_part}' in composite string: {e}"
-                )
+                raise ValueError(f"Invalid version part '{version_part}' in composite string: {e}")
 
         return parsed_versions
 
@@ -528,9 +509,7 @@ class DeviceManager:
         all_latest_versions = []
         for version_str in versions:
             try:
-                latest_from_this_str = self.get_latest_version_from_composite(
-                    version_str
-                )
+                latest_from_this_str = self.get_latest_version_from_composite(version_str)
                 all_latest_versions.append(latest_from_this_str)
             except ValueError as e:
                 raise ValueError(f"Invalid version string '{version_str}': {e}")

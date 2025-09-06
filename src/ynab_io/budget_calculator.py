@@ -1,5 +1,6 @@
-from ynab_io.models import Budget
 from datetime import date
+
+from ynab_io.models import Budget
 
 
 class BudgetCalculator:

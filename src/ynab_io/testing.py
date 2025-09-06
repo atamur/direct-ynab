@@ -14,7 +14,8 @@ Example usage:
 
 import functools
 from pathlib import Path
-from typing import Callable, Any, Optional
+from typing import Callable, Optional
+
 import pytest
 
 from .parser import YnabParser

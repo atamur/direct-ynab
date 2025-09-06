@@ -8,10 +8,10 @@ def test_environment_setup():
 
 def test_imports():
     """Test that required dependencies can be imported."""
-    import pytest
-    import pydantic
-    import pandas
     import filelock
+    import pandas
+    import pydantic
+    import pytest
 
     assert pytest is not None
     assert pydantic is not None
@@ -21,7 +21,6 @@ def test_imports():
 
 def test_project_structure():
     """Test that project structure exists."""
-    import os
     from pathlib import Path
 
     project_root = Path(__file__).parent.parent

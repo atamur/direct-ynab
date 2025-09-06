@@ -4,12 +4,12 @@ This file demonstrates how existing tests can be updated to use the version anno
 system to make them resilient to fixture data changes.
 """
 
-import pytest
 from pathlib import Path
-from assertpy import assert_that
 
-from ynab_io.testing import budget_version
+from assertpy import assert_that
 from ynab_io.models import Account, Payee, Transaction
+from ynab_io.testing import budget_version
+
 from .conftest import assert_parser_collections_populated
 
 
@@ -68,9 +68,7 @@ class TestVersionAnnotationExamples:
 
         # Should have multiple deltas applied but not all
         assert len(parser.applied_deltas) > 1
-        assert_that(len(parser.applied_deltas)).is_less_than(
-            len(parser._discover_delta_files())
-        )  # Not all deltas
+        assert_that(len(parser.applied_deltas)).is_less_than(len(parser._discover_delta_files()))  # Not all deltas
 
         # All applied deltas should be version 87 or earlier
         for delta in parser.applied_deltas:
@@ -206,8 +204,6 @@ class TestVersionAnnotationMigrationExamples:
         parser.restore_to_version(0)  # Base state
         assert len(parser.accounts) == final_accounts  # Same accounts
         assert len(parser.payees) > final_payees  # Base has more payees
-        assert (
-            len(parser.transactions) > final_transactions
-        )  # Base has more transactions
+        assert len(parser.transactions) > final_transactions  # Base has more transactions
 
         # This demonstrates how some entities are deleted over time (tombstones)

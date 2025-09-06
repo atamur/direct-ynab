@@ -1,16 +1,14 @@
 """Tests for the YNAB CLI tool."""
 
 import json
-import zipfile
 from pathlib import Path
-from unittest.mock import patch, Mock, MagicMock
-from typer.testing import CliRunner
-import pytest
-from filelock import Timeout
+from unittest.mock import MagicMock, Mock, patch
 
-from orchestration.cli import app
-from ynab_io.testing import budget_version
+import pytest
 from assertpy import assert_that
+from filelock import Timeout
+from orchestration.cli import app
+from typer.testing import CliRunner
 
 
 class TestEnhancedErrorHandling:
@@ -31,24 +29,17 @@ class TestEnhancedErrorHandling:
         with patch("orchestration.cli.LockManager") as mock_lock_manager:
             mock_lock_manager.side_effect = Timeout("Lock timeout")
 
-            result = runner.invoke(
-                app, ["load", "tests/fixtures/My Test Budget~E0C1460F.ynab4"]
-            )
+            result = runner.invoke(app, ["load", "tests/fixtures/My Test Budget~E0C1460F.ynab4"])
 
             assert result.exit_code == 1
-            assert (
-                "Unable to acquire budget lock: Another application may be using this budget"
-                in result.stderr
-            )
+            assert "Unable to acquire budget lock: Another application may be using this budget" in result.stderr
 
     def test_locked_budget_operation_permission_denied_error(self, runner):
         """Test locked_budget_operation provides specific error for permission denied."""
         with patch("orchestration.cli.LockManager") as mock_lock_manager:
             mock_lock_manager.side_effect = PermissionError("Permission denied")
 
-            result = runner.invoke(
-                app, ["load", "tests/fixtures/My Test Budget~E0C1460F.ynab4"]
-            )
+            result = runner.invoke(app, ["load", "tests/fixtures/My Test Budget~E0C1460F.ynab4"])
 
             assert result.exit_code == 1
             assert "Permission denied accessing budget files" in result.stderr
@@ -58,9 +49,7 @@ class TestEnhancedErrorHandling:
         with patch("orchestration.cli.LockManager") as mock_lock_manager:
             mock_lock_manager.side_effect = OSError(28, "No space left on device")
 
-            result = runner.invoke(
-                app, ["load", "tests/fixtures/My Test Budget~E0C1460F.ynab4"]
-            )
+            result = runner.invoke(app, ["load", "tests/fixtures/My Test Budget~E0C1460F.ynab4"])
 
             assert result.exit_code == 1
             assert "Insufficient disk space for budget operation" in result.stderr
@@ -69,13 +58,9 @@ class TestEnhancedErrorHandling:
         """Test handle_budget_error provides specific error for corrupted YNAB4 structure."""
         with patch("orchestration.cli.locked_budget_operation"):
             with patch("orchestration.cli.YnabParser") as mock_parser:
-                mock_parser.side_effect = ValueError(
-                    "Corrupted YNAB4 budget data: missing Budget.ymeta"
-                )
+                mock_parser.side_effect = ValueError("Corrupted YNAB4 budget data: missing Budget.ymeta")
 
-                result = runner.invoke(
-                    app, ["load", "tests/fixtures/My Test Budget~E0C1460F.ynab4"]
-                )
+                result = runner.invoke(app, ["load", "tests/fixtures/My Test Budget~E0C1460F.ynab4"])
 
                 assert result.exit_code == 1
                 assert "Budget file appears to be corrupted or invalid" in result.stderr
@@ -85,13 +70,9 @@ class TestEnhancedErrorHandling:
         """Test handle_budget_error provides specific error for invalid YNAB4 structure."""
         with patch("orchestration.cli.locked_budget_operation"):
             with patch("orchestration.cli.YnabParser") as mock_parser:
-                mock_parser.side_effect = FileNotFoundError(
-                    "Invalid YNAB4 budget structure: .ydevice not found"
-                )
+                mock_parser.side_effect = FileNotFoundError("Invalid YNAB4 budget structure: .ydevice not found")
 
-                result = runner.invoke(
-                    app, ["load", "tests/fixtures/My Test Budget~E0C1460F.ynab4"]
-                )
+                result = runner.invoke(app, ["load", "tests/fixtures/My Test Budget~E0C1460F.ynab4"])
 
                 assert result.exit_code == 1
                 assert "Invalid YNAB4 budget structure" in result.stderr
@@ -104,9 +85,7 @@ class TestEnhancedErrorHandling:
                 json_error = json.JSONDecodeError("Invalid JSON", "test.json", 0)
                 mock_parser.side_effect = json_error
 
-                result = runner.invoke(
-                    app, ["load", "tests/fixtures/My Test Budget~E0C1460F.ynab4"]
-                )
+                result = runner.invoke(app, ["load", "tests/fixtures/My Test Budget~E0C1460F.ynab4"])
 
                 assert result.exit_code == 1
                 assert "Budget file contains invalid data format" in result.stderr
@@ -117,18 +96,12 @@ class TestEnhancedErrorHandling:
             with patch("orchestration.cli.BackupManager") as mock_backup:
                 mock_backup_instance = Mock()
                 mock_backup.return_value = mock_backup_instance
-                mock_backup_instance.backup_budget.side_effect = PermissionError(
-                    "Permission denied writing backup"
-                )
+                mock_backup_instance.backup_budget.side_effect = PermissionError("Permission denied writing backup")
 
-                result = runner.invoke(
-                    app, ["backup", "tests/fixtures/My Test Budget~E0C1460F.ynab4"]
-                )
+                result = runner.invoke(app, ["backup", "tests/fixtures/My Test Budget~E0C1460F.ynab4"])
 
                 assert result.exit_code == 1
-                assert (
-                    "Unable to create backup: insufficient permissions" in result.stderr
-                )
+                assert "Unable to create backup: insufficient permissions" in result.stderr
 
     def test_handle_budget_error_backup_disk_space_error(self, runner):
         """Test handle_budget_error provides specific error for backup disk space issues."""
@@ -136,18 +109,12 @@ class TestEnhancedErrorHandling:
             with patch("orchestration.cli.BackupManager") as mock_backup:
                 mock_backup_instance = Mock()
                 mock_backup.return_value = mock_backup_instance
-                mock_backup_instance.backup_budget.side_effect = OSError(
-                    28, "No space left on device"
-                )
+                mock_backup_instance.backup_budget.side_effect = OSError(28, "No space left on device")
 
-                result = runner.invoke(
-                    app, ["backup", "tests/fixtures/My Test Budget~E0C1460F.ynab4"]
-                )
+                result = runner.invoke(app, ["backup", "tests/fixtures/My Test Budget~E0C1460F.ynab4"])
 
                 assert result.exit_code == 1
-                assert (
-                    "Unable to create backup: insufficient disk space" in result.stderr
-                )
+                assert "Unable to create backup: insufficient disk space" in result.stderr
 
     def test_handle_budget_error_parser_apply_deltas_error(self, runner):
         """Test handle_budget_error provides specific error for delta parsing issues."""
@@ -156,13 +123,9 @@ class TestEnhancedErrorHandling:
                 parser_instance = Mock()
                 mock_parser.return_value = parser_instance
                 parser_instance.parse.return_value = None
-                parser_instance.apply_deltas.side_effect = ValueError(
-                    "Invalid delta filename format: corrupted.ydiff"
-                )
+                parser_instance.apply_deltas.side_effect = ValueError("Invalid delta filename format: corrupted.ydiff")
 
-                result = runner.invoke(
-                    app, ["load", "tests/fixtures/My Test Budget~E0C1460F.ynab4"]
-                )
+                result = runner.invoke(app, ["load", "tests/fixtures/My Test Budget~E0C1460F.ynab4"])
 
                 assert result.exit_code == 1
                 assert "Error processing budget changes" in result.stderr
@@ -174,9 +137,7 @@ class TestEnhancedErrorHandling:
             with patch("orchestration.cli.YnabParser") as mock_parser:
                 mock_parser.side_effect = RuntimeError("Some unexpected error")
 
-                result = runner.invoke(
-                    app, ["load", "tests/fixtures/My Test Budget~E0C1460F.ynab4"]
-                )
+                result = runner.invoke(app, ["load", "tests/fixtures/My Test Budget~E0C1460F.ynab4"])
 
                 assert result.exit_code == 1
                 assert "Error loading budget: Some unexpected error" in result.stderr
@@ -184,29 +145,19 @@ class TestEnhancedErrorHandling:
     def test_locked_budget_operation_budget_ymeta_missing(self, runner):
         """Test locked_budget_operation provides specific error when Budget.ymeta is missing."""
         with patch("orchestration.cli.LockManager") as mock_lock_manager:
-            mock_lock_manager.side_effect = ValueError(
-                "Not a valid YNAB4 budget directory: missing Budget.ymeta"
-            )
+            mock_lock_manager.side_effect = ValueError("Not a valid YNAB4 budget directory: missing Budget.ymeta")
 
-            result = runner.invoke(
-                app, ["load", "tests/fixtures/My Test Budget~E0C1460F.ynab4"]
-            )
+            result = runner.invoke(app, ["load", "tests/fixtures/My Test Budget~E0C1460F.ynab4"])
 
             assert result.exit_code == 1
-            assert (
-                "Invalid budget directory: missing Budget.ymeta file" in result.stderr
-            )
+            assert "Invalid budget directory: missing Budget.ymeta file" in result.stderr
 
     def test_locked_budget_operation_not_directory_error(self, runner):
         """Test locked_budget_operation provides specific error when path is not a directory."""
         with patch("orchestration.cli.LockManager") as mock_lock_manager:
-            mock_lock_manager.side_effect = ValueError(
-                "Budget path must be a directory"
-            )
+            mock_lock_manager.side_effect = ValueError("Budget path must be a directory")
 
-            result = runner.invoke(
-                app, ["load", "tests/fixtures/My Test Budget~E0C1460F.ynab4"]
-            )
+            result = runner.invoke(app, ["load", "tests/fixtures/My Test Budget~E0C1460F.ynab4"])
 
             assert result.exit_code == 1
             assert "Budget path must be a directory, not a file" in result.stderr
@@ -257,11 +208,7 @@ class TestCLI:
             try:
                 # Parse the path from stdout: line starting with "Backup file:"
                 backup_line = next(
-                    (
-                        line
-                        for line in result.stdout.splitlines()
-                        if line.startswith("Backup file:")
-                    ),
+                    (line for line in result.stdout.splitlines() if line.startswith("Backup file:")),
                     None,
                 )
                 backup_path = None
@@ -273,11 +220,7 @@ class TestCLI:
                             backup_path = bp
                 if backup_path is None:
                     # Fallback: remove the newest matching backup file in the fixtures directory
-                    candidates = list(
-                        test_budget_path.parent.glob(
-                            f"{test_budget_path.stem}_backup_*.zip"
-                        )
-                    )
+                    candidates = list(test_budget_path.parent.glob(f"{test_budget_path.stem}_backup_*.zip"))
                     if candidates:
                         backup_path = max(candidates, key=lambda p: p.stat().st_mtime)
                 if backup_path and backup_path.exists():
@@ -303,9 +246,7 @@ class TestCLI:
 
     def test_inspect_command_transactions(self, runner, test_budget_path):
         """Test inspect command shows transaction details."""
-        result = runner.invoke(
-            app, ["inspect", str(test_budget_path), "--transactions"]
-        )
+        result = runner.invoke(app, ["inspect", str(test_budget_path), "--transactions"])
 
         assert result.exit_code == 0
         assert "Transaction Details" in result.stdout
@@ -328,9 +269,7 @@ class TestCLI:
         assert "Error: Budget path does not exist" in result.stderr
 
     @patch("orchestration.cli.locked_budget_operation")
-    def test_load_command_uses_lock_manager(
-        self, mock_locked_operation, runner, test_budget_path
-    ):
+    def test_load_command_uses_lock_manager(self, mock_locked_operation, runner, test_budget_path):
         """Test load command uses locked_budget_operation context manager."""
         mock_context = MagicMock()
         mock_context.__enter__.return_value = test_budget_path
@@ -348,9 +287,7 @@ class TestCLI:
         assert result.exit_code == 0
 
     @patch("orchestration.cli.locked_budget_operation")
-    def test_backup_command_uses_lock_manager(
-        self, mock_locked_operation, runner, test_budget_path
-    ):
+    def test_backup_command_uses_lock_manager(self, mock_locked_operation, runner, test_budget_path):
         """Test backup command uses locked_budget_operation context manager."""
         mock_context = MagicMock()
         mock_context.__enter__.return_value = test_budget_path
@@ -372,11 +309,7 @@ class TestCLI:
             try:
                 # Parse the path from stdout: line starting with "Backup file:"
                 backup_line = next(
-                    (
-                        line
-                        for line in result.stdout.splitlines()
-                        if line.startswith("Backup file:")
-                    ),
+                    (line for line in result.stdout.splitlines() if line.startswith("Backup file:")),
                     None,
                 )
                 backup_path = None
@@ -388,11 +321,7 @@ class TestCLI:
                             backup_path = bp
                 if backup_path is None:
                     # Fallback: remove the newest matching backup file in the fixtures directory
-                    candidates = list(
-                        test_budget_path.parent.glob(
-                            f"{test_budget_path.stem}_backup_*.zip"
-                        )
-                    )
+                    candidates = list(test_budget_path.parent.glob(f"{test_budget_path.stem}_backup_*.zip"))
                     if candidates:
                         backup_path = max(candidates, key=lambda p: p.stat().st_mtime)
                 if backup_path and backup_path.exists():
@@ -402,9 +331,7 @@ class TestCLI:
                 pass
 
     @patch("orchestration.cli.locked_budget_operation")
-    def test_inspect_command_uses_lock_manager(
-        self, mock_locked_operation, runner, test_budget_path
-    ):
+    def test_inspect_command_uses_lock_manager(self, mock_locked_operation, runner, test_budget_path):
         """Test inspect command uses locked_budget_operation context manager."""
         mock_context = MagicMock()
         mock_context.__enter__.return_value = test_budget_path
@@ -422,9 +349,7 @@ class TestCLI:
         assert result.exit_code == 0
 
     @patch("orchestration.cli.locked_budget_operation")
-    def test_load_command_lock_timeout_error(
-        self, mock_locked_operation, runner, test_budget_path
-    ):
+    def test_load_command_lock_timeout_error(self, mock_locked_operation, runner, test_budget_path):
         """Test load command handles lock timeout error."""
         mock_locked_operation.side_effect = Exception(
             "Failed to acquire lock for budget: [Errno 11] Resource temporarily unavailable"
@@ -437,9 +362,7 @@ class TestCLI:
         assert "Failed to acquire lock" in result.stderr
 
     @patch("orchestration.cli.locked_budget_operation")
-    def test_backup_command_lock_timeout_error(
-        self, mock_locked_operation, runner, test_budget_path
-    ):
+    def test_backup_command_lock_timeout_error(self, mock_locked_operation, runner, test_budget_path):
         """Test backup command handles lock timeout error."""
         mock_locked_operation.side_effect = Exception(
             "Failed to acquire lock for budget: [Errno 11] Resource temporarily unavailable"
@@ -452,9 +375,7 @@ class TestCLI:
         assert "Failed to acquire lock" in result.stderr
 
     @patch("orchestration.cli.locked_budget_operation")
-    def test_inspect_command_lock_timeout_error(
-        self, mock_locked_operation, runner, test_budget_path
-    ):
+    def test_inspect_command_lock_timeout_error(self, mock_locked_operation, runner, test_budget_path):
         """Test inspect command handles lock timeout error."""
         mock_locked_operation.side_effect = Exception(
             "Failed to acquire lock for budget: [Errno 11] Resource temporarily unavailable"

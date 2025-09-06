@@ -1,22 +1,23 @@
 """Comprehensive tests for YnabParser class."""
 
 import json
-import pytest
 from pathlib import Path
 from unittest.mock import mock_open, patch
 
+import pytest
 from assertpy import assert_that
-from ynab_io.parser import YnabParser
 from ynab_io.models import (
     Account,
-    Payee,
-    Transaction,
-    MasterCategory,
     Category,
+    MasterCategory,
     MonthlyBudget,
     MonthlyCategoryBudget,
+    Payee,
     ScheduledTransaction,
+    Transaction,
 )
+from ynab_io.parser import YnabParser
+
 from .conftest import assert_parser_collections_populated
 
 
@@ -61,9 +62,7 @@ class TestYnabParser:
         empty_budget = tmp_path / "empty_budget"
         empty_budget.mkdir()
 
-        with pytest.raises(
-            FileNotFoundError, match="Could not find data directory in budget"
-        ):
+        with pytest.raises(FileNotFoundError, match="Could not find data directory in budget"):
             YnabParser(empty_budget)
 
     def test_find_device_dir_missing_devices_directory_raises_error(self, tmp_path):
@@ -279,14 +278,10 @@ class TestYnabParser:
 
         # Should be sorted in ascending order with expected starting and ending versions
         assert_that(version_numbers).is_not_empty()
-        assert version_numbers == sorted(
-            version_numbers
-        )  # Should be in ascending order
+        assert version_numbers == sorted(version_numbers)  # Should be in ascending order
         assert_that(version_numbers).contains(63, 67)  # Should contain early versions
         assert (
-            140 in version_numbers
-            or 141 in version_numbers
-            or max(version_numbers) >= 140
+            140 in version_numbers or 141 in version_numbers or max(version_numbers) >= 140
         )  # Should have high version numbers
 
     def test_parse_delta_versions_handles_valid_filenames(self, parser):
@@ -506,10 +501,7 @@ class TestYnabParser:
             parser._apply_delta(Path("test.ydiff"))
 
         # Should have added the new scheduled transaction
-        assert (
-            len(parser.scheduled_transactions)
-            == initial_scheduled_transaction_count + 1
-        )
+        assert len(parser.scheduled_transactions) == initial_scheduled_transaction_count + 1
         assert "TEST-SCHEDULED" in parser.scheduled_transactions
 
     def test_apply_delta_ignores_unknown_entity_types(self, parser):
@@ -673,10 +665,7 @@ class TestYnabParser:
             parser._apply_delta(Path("test.ydiff"))
 
         # Should have added the new monthly category budget
-        assert (
-            len(parser.monthly_category_budgets)
-            == initial_monthly_category_budget_count + 1
-        )
+        assert len(parser.monthly_category_budgets) == initial_monthly_category_budget_count + 1
         assert "MCB/2017-01/TEST-CATEGORY-ID" in parser.monthly_category_budgets
 
         # Verify the properties are correct
@@ -727,13 +716,9 @@ class TestYnabParser:
         assert updated_mcb.note == "Updated note"  # Should be updated
         assert updated_mcb.entityVersion == "A-20"  # Version should be updated
         assert updated_mcb.categoryId == "EXISTING-CATEGORY"  # Should remain the same
-        assert (
-            updated_mcb.overspendingHandling == "AffectsBuffer"
-        )  # Should remain the same
+        assert updated_mcb.overspendingHandling == "AffectsBuffer"  # Should remain the same
 
-    def test_apply_delta_handles_monthly_category_budget_tombstone_deletions(
-        self, parser
-    ):
+    def test_apply_delta_handles_monthly_category_budget_tombstone_deletions(self, parser):
         """Test that _apply_delta correctly handles tombstone deletions of monthly category budgets."""
         parser.parse()
 
@@ -820,9 +805,7 @@ class TestYnabParserVersionParsing:
 
         return YnabParser(budget_dir)
 
-    def test_consolidated_version_parsing_now_gives_correct_sort_order(
-        self, parser_with_mock_device_manager
-    ):
+    def test_consolidated_version_parsing_now_gives_correct_sort_order(self, parser_with_mock_device_manager):
         """Test that consolidated version parsing now gives correct sort order for composite versions.
 
         After consolidation, the parser uses DeviceManager methods to correctly identify
@@ -832,17 +815,11 @@ class TestYnabParserVersionParsing:
 
         # Create delta files where we need correct sort order based on true latest versions
         delta_path_1 = Path("A-1,B-9999_A-2,B-10000.ydiff")  # B-9999 is the real latest
-        delta_path_2 = Path(
-            "A-5000,B-50_A-5001,B-51.ydiff"
-        )  # A-5000 is the real latest
+        delta_path_2 = Path("A-5000,B-50_A-5001,B-51.ydiff")  # A-5000 is the real latest
 
         # After consolidation, implementation uses DeviceManager methods
-        sort_key_1 = parser._get_delta_sort_key(
-            delta_path_1
-        )  # Returns 9999 (from B-9999)
-        sort_key_2 = parser._get_delta_sort_key(
-            delta_path_2
-        )  # Returns 5000 (from A-5000)
+        sort_key_1 = parser._get_delta_sort_key(delta_path_1)  # Returns 9999 (from B-9999)
+        sort_key_2 = parser._get_delta_sort_key(delta_path_2)  # Returns 5000 (from A-5000)
 
         # The CORRECT order is now achieved: delta_path_2 first (5000), then delta_path_1 (9999)
         assert sort_key_2 < sort_key_1  # This is now the CORRECT order
@@ -851,9 +828,7 @@ class TestYnabParserVersionParsing:
         assert sort_key_1 == 9999  # Latest from B-9999
         assert sort_key_2 == 5000  # Latest from A-5000
 
-    def test_consolidated_entity_version_comparison_now_uses_true_latest(
-        self, parser_with_mock_device_manager
-    ):
+    def test_consolidated_entity_version_comparison_now_uses_true_latest(self, parser_with_mock_device_manager):
         """Test that consolidated entity version comparison now uses true latest version from composite strings.
 
         After consolidation, when comparing entity versions like 'A-1,B-9999' vs 'A-5000,B-50',
@@ -904,16 +879,10 @@ class TestYnabParserVersionParsing:
         updated_transaction = parser.transactions["TEST-ENTITY-ID"]
 
         # Consolidated implementation should have updated to new version (100.0) because 9999 > 5000
-        assert (
-            updated_transaction.amount == 100.0
-        )  # New amount - CORRECT behavior after consolidation
-        assert (
-            updated_transaction.entityVersion == "A-1,B-9999,C-100"
-        )  # New version string
+        assert updated_transaction.amount == 100.0  # New amount - CORRECT behavior after consolidation
+        assert updated_transaction.entityVersion == "A-1,B-9999,C-100"  # New version string
 
-    def test_consolidated_version_parsing_gives_correct_sort_order(
-        self, parser_with_mock_device_manager
-    ):
+    def test_consolidated_version_parsing_gives_correct_sort_order(self, parser_with_mock_device_manager):
         """Test that consolidated version parsing using DeviceManager gives correct sort order.
 
         This test will FAIL until we consolidate parser to use DeviceManager's version parsing methods.
@@ -921,27 +890,17 @@ class TestYnabParserVersionParsing:
         parser = parser_with_mock_device_manager
 
         # Create delta files where we want the correct sort order based on true latest versions
-        delta_path_1 = Path(
-            "A-1,B-9999_A-2,B-10000.ydiff"
-        )  # B-9999 should be recognized as latest
-        delta_path_2 = Path(
-            "A-5000,B-50_A-5001,B-51.ydiff"
-        )  # A-5000 should be recognized as latest
+        delta_path_1 = Path("A-1,B-9999_A-2,B-10000.ydiff")  # B-9999 should be recognized as latest
+        delta_path_2 = Path("A-5000,B-50_A-5001,B-51.ydiff")  # A-5000 should be recognized as latest
 
         # After consolidation, the sort keys should be based on the true latest versions
-        sort_key_1 = parser._get_delta_sort_key(
-            delta_path_1
-        )  # Should return 9999 (from B-9999)
-        sort_key_2 = parser._get_delta_sort_key(
-            delta_path_2
-        )  # Should return 5000 (from A-5000)
+        sort_key_1 = parser._get_delta_sort_key(delta_path_1)  # Should return 9999 (from B-9999)
+        sort_key_2 = parser._get_delta_sort_key(delta_path_2)  # Should return 5000 (from A-5000)
 
         # The CORRECT order should be: delta_path_2 first (5000), then delta_path_1 (9999)
         assert sort_key_2 < sort_key_1  # This should be TRUE after consolidation
 
-    def test_consolidated_entity_version_comparison_uses_true_latest(
-        self, parser_with_mock_device_manager
-    ):
+    def test_consolidated_entity_version_comparison_uses_true_latest(self, parser_with_mock_device_manager):
         """Test that consolidated version comparison uses true latest version from composite strings.
 
         This test will FAIL until we consolidate parser to use DeviceManager's version parsing methods.
@@ -991,27 +950,19 @@ class TestYnabParserVersionParsing:
         updated_transaction = parser.transactions["TEST-ENTITY-ID"]
 
         # Consolidated implementation should have updated to new version (100.0) because 9999 > 5000
-        assert (
-            updated_transaction.amount == 100.0
-        )  # New amount - CORRECT behavior after consolidation
+        assert updated_transaction.amount == 100.0  # New amount - CORRECT behavior after consolidation
 
-    def test_parse_delta_versions_handles_composite_version_filenames(
-        self, parser_with_mock_device_manager
-    ):
+    def test_parse_delta_versions_handles_composite_version_filenames(self, parser_with_mock_device_manager):
         """Test that _parse_delta_versions correctly parses filenames with composite versions."""
         parser = parser_with_mock_device_manager
 
         # Test composite version filename
-        start, end = parser._parse_delta_versions(
-            "A-10001,B-63,C-52_A-10002,B-63,C-53.ydiff"
-        )
+        start, end = parser._parse_delta_versions("A-10001,B-63,C-52_A-10002,B-63,C-53.ydiff")
         assert start == "A-10001,B-63,C-52"
         assert end == "A-10002,B-63,C-53"
 
         # Test longer composite version filename
-        start, end = parser._parse_delta_versions(
-            "A-10001,B-63,C-52,E-224,F-9_A-10002,B-64,C-52,E-225,F-10.ydiff"
-        )
+        start, end = parser._parse_delta_versions("A-10001,B-63,C-52,E-224,F-9_A-10002,B-64,C-52,E-225,F-10.ydiff")
         assert start == "A-10001,B-63,C-52,E-224,F-9"
         assert end == "A-10002,B-64,C-52,E-225,F-10"
 
@@ -1036,9 +987,7 @@ class TestYnabParserVersionTracking:
         # Should track all applied delta files
         assert hasattr(parser, "applied_deltas")
         assert isinstance(parser.applied_deltas, list)
-        assert_that(
-            parser.applied_deltas
-        ).is_not_empty()  # All delta files should be applied
+        assert_that(parser.applied_deltas).is_not_empty()  # All delta files should be applied
 
         # Each applied delta should be a Path object
         for applied_delta in parser.applied_deltas:
@@ -1062,10 +1011,7 @@ class TestYnabParserVersionTracking:
 
         # Applied deltas should only include those up to version 67
         assert len(parser.applied_deltas) < 26
-        assert all(
-            parser._get_version_end_number(delta) <= 67
-            for delta in parser.applied_deltas
-        )
+        assert all(parser._get_version_end_number(delta) <= 67 for delta in parser.applied_deltas)
 
     def test_parser_can_restore_to_base_state_before_any_deltas(self, parser):
         """Test that parser can restore to base state (before any deltas applied)."""
@@ -1132,21 +1078,15 @@ class TestYnabParserVersionTracking:
 
         # Should include version 0 (base state) plus all delta end versions
         assert 0 in available_versions
-        assert_that(
-            available_versions
-        ).is_not_empty()  # Should have multiple versions available
-        assert_that(len(available_versions)).is_greater_than(
-            10
-        )  # Base state + multiple deltas
+        assert_that(available_versions).is_not_empty()  # Should have multiple versions available
+        assert_that(len(available_versions)).is_greater_than(10)  # Base state + multiple deltas
 
         # Should be sorted in ascending order
         assert available_versions == sorted(available_versions)
 
         # Should include base version and multiple delta versions
         assert 0 in available_versions  # Base version should always be present
-        assert_that(available_versions).contains(
-            67, 87, 141
-        )  # Key milestone versions should be present
+        assert_that(available_versions).contains(67, 87, 141)  # Key milestone versions should be present
 
 
 class TestYnabParserRobustPathDiscovery:
@@ -1211,9 +1151,7 @@ class TestYnabParserRobustPathDiscovery:
         budget = parser.parse()
         assert budget is not None
 
-    def test_parser_selects_device_with_highest_knowledge_version_not_alphabetical_order(
-        self, tmp_path
-    ):
+    def test_parser_selects_device_with_highest_knowledge_version_not_alphabetical_order(self, tmp_path):
         """Test that parser selects device based on knowledge version, not alphabetical order."""
         # Create budget structure where alphabetically first device has older knowledge
         budget_dir = tmp_path / "knowledge_priority_budget"
@@ -1285,9 +1223,7 @@ class TestYnabParserRobustPathDiscovery:
         # Verify the correct device directory was selected (device A has newer knowledge)
         assert parser.device_dir.name == device_a_guid
 
-    def test_parser_falls_back_to_default_device_when_no_active_device_determinable(
-        self, tmp_path
-    ):
+    def test_parser_falls_back_to_default_device_when_no_active_device_determinable(self, tmp_path):
         """Test that parser correctly falls back to a default device if no active device can be determined."""
         # Create budget structure with devices that have corrupted or missing knowledge
         budget_dir = tmp_path / "fallback_budget"
@@ -1307,7 +1243,7 @@ class TestYnabParserRobustPathDiscovery:
                 {
                     "deviceGUID": device_guid,
                     "shortDeviceId": "A",
-                    "friendlyName": "Fallback Device"
+                    "friendlyName": "Fallback Device",
                     # Note: Missing 'knowledge' field - should trigger fallback
                 },
                 f,
@@ -1327,77 +1263,3 @@ class TestYnabParserRobustPathDiscovery:
         # Verify parser can parse successfully
         budget = parser.parse()
         assert budget is not None
-
-    def test_parser_selects_device_with_highest_knowledge_version_not_alphabetical_order(
-        self, tmp_path
-    ):
-        """Test that parser selects device based on knowledge version, not alphabetical order."""
-        # Create budget structure where alphabetically first device has older knowledge
-        budget_dir = tmp_path / "knowledge_priority_budget"
-        budget_dir.mkdir()
-        data_dir = budget_dir / "data1~KNOWLEDGE"
-        data_dir.mkdir()
-        devices_dir = data_dir / "devices"
-        devices_dir.mkdir()
-
-        # Create device A with very high knowledge version (A-100)
-        device_a_guid = "DEVICE-A-NEWER"
-        device_a_dir = data_dir / device_a_guid
-        device_a_dir.mkdir()
-        ydevice_a = devices_dir / "A.ydevice"
-        with open(ydevice_a, "w") as f:
-            json.dump(
-                {
-                    "deviceGUID": device_a_guid,
-                    "shortDeviceId": "A",
-                    "friendlyName": "Device A with New Knowledge",
-                    "knowledge": "A-100",  # Higher version number
-                    "knowledgeInFullBudgetFile": "A-100",
-                },
-                f,
-            )
-
-        # Create Budget.yfull in device A
-        budget_yfull_a = device_a_dir / "Budget.yfull"
-        with open(budget_yfull_a, "w") as f:
-            json.dump({"accounts": [], "payees": [], "transactions": []}, f)
-
-        # Create device Z with lower knowledge version (Z-50)
-        # (alphabetically later, but older knowledge)
-        device_z_guid = "DEVICE-Z-OLDER"
-        device_z_dir = data_dir / device_z_guid
-        device_z_dir.mkdir()
-        ydevice_z = devices_dir / "Z.ydevice"
-        with open(ydevice_z, "w") as f:
-            json.dump(
-                {
-                    "deviceGUID": device_z_guid,
-                    "shortDeviceId": "Z",
-                    "friendlyName": "Device Z with Old Knowledge",
-                    "knowledge": "Z-50",  # Lower version number
-                    "knowledgeInFullBudgetFile": "Z-50",
-                },
-                f,
-            )
-
-        # Create Budget.yfull in device Z (should NOT be used)
-        budget_yfull_z = device_z_dir / "Budget.yfull"
-        with open(budget_yfull_z, "w") as f:
-            json.dump({"accounts": [], "payees": [], "transactions": []}, f)
-
-        # Initialize parser - should select device A despite alphabetical ordering
-        parser = YnabParser(budget_dir)
-
-        # Current implementation will likely select A.ydevice (first alphabetically)
-        # But we want it to select based on latest knowledge version
-        # This test should FAIL with current implementation when knowledge comparison isn't done
-
-        # Parse and verify we get the data from device A (newer knowledge)
-        budget = parser.parse()
-
-        # Parse should complete successfully
-        budget = parser.parse()
-        assert budget is not None
-
-        # Verify the correct device directory was selected (device A has newer knowledge)
-        assert parser.device_dir.name == device_a_guid

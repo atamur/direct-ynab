@@ -10,12 +10,8 @@ rather than duplicating their coverage.
 """
 
 import json
-import pytest
-from pathlib import Path
 
 from ynab_io.device_manager import DeviceManager
-from ynab_io.parser import YnabParser
-from ynab_io.writer import YnabWriter
 
 
 class TestPathDiscoveryConsolidation:
@@ -57,10 +53,7 @@ class TestPathDiscoveryConsolidation:
         assert device_manager.get_devices_dir_path() == devices_dir
         assert device_manager.get_device_dir_path(test_device_guid) == device_dir
         assert device_manager.get_ydevice_file_path("A") == ydevice_file
-        assert (
-            device_manager.get_budget_file_path(test_device_guid)
-            == device_dir / "Budget.yfull"
-        )
+        assert device_manager.get_budget_file_path(test_device_guid) == device_dir / "Budget.yfull"
 
 
 class TestPathDiscoveryConsistency:

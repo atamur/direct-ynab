@@ -1,12 +1,11 @@
-import pytest
 from pathlib import Path
-from ynab_io.parser import YnabParser
-from ynab_io.models import Budget
 
-from ynab_io.models import Budget, Account
+import pytest
 
 # This will fail because BudgetCalculator does not exist yet
 from ynab_io.budget_calculator import BudgetCalculator
+from ynab_io.models import Account, Budget
+from ynab_io.parser import YnabParser
 
 
 @pytest.fixture
@@ -33,9 +32,7 @@ def test_budget_calculator_initialization(calculator: BudgetCalculator, budget: 
     assert calculator.budget == budget
 
 
-def test_get_account_balance_no_transactions(
-    calculator: BudgetCalculator, budget: Budget
-):
+def test_get_account_balance_no_transactions(calculator: BudgetCalculator, budget: Budget):
     """Tests that the balance is 0 for an account with no transactions."""
     # Create a new account with no transactions
     new_account = Account(
@@ -61,9 +58,7 @@ def test_get_account_balance_cleared_transactions(calculator: BudgetCalculator):
     assert balance[1] == 0
 
 
-def test_get_account_balance_uncleared_transactions(
-    calculator: BudgetCalculator, budget: Budget
-):
+def test_get_account_balance_uncleared_transactions(calculator: BudgetCalculator, budget: Budget):
     """Tests that the balance is correct for an account with only uncleared transactions."""
     # Create a new account and add some uncleared transactions
     new_account = Account(

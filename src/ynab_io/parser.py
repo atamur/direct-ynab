@@ -2,20 +2,20 @@ import copy
 import json
 import logging
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import Any, Dict, List
 
+from .device_manager import DeviceManager
 from .models import (
     Account,
-    Payee,
-    Transaction,
-    MasterCategory,
+    Budget,
     Category,
+    MasterCategory,
     MonthlyBudget,
     MonthlyCategoryBudget,
+    Payee,
     ScheduledTransaction,
-    Budget,
+    Transaction,
 )
-from .device_manager import DeviceManager
 
 
 class YnabParser:
@@ -88,12 +88,8 @@ class YnabParser:
         # Parse simple entities
         self._parse_entities(data.get("accounts", []), Account, self.accounts)
         self._parse_entities(data.get("payees", []), Payee, self.payees)
-        self._parse_entities(
-            data.get("transactions", []), Transaction, self.transactions
-        )
-        self._parse_entities(
-            data.get("monthlyBudgets", []), MonthlyBudget, self.monthly_budgets
-        )
+        self._parse_entities(data.get("transactions", []), Transaction, self.transactions)
+        self._parse_entities(data.get("monthlyBudgets", []), MonthlyBudget, self.monthly_budgets)
         self._parse_entities(
             data.get("monthlyCategoryBudgets", []),
             MonthlyCategoryBudget,
@@ -143,18 +139,13 @@ class YnabParser:
         """Parse master categories and their nested subcategories."""
         for master_category_data in master_categories_data:
             # Extract and process nested categories first
-            if (
-                "subCategories" in master_category_data
-                and master_category_data["subCategories"] is not None
-            ):
+            if "subCategories" in master_category_data and master_category_data["subCategories"] is not None:
                 for category_data in master_category_data["subCategories"]:
                     category = Category(**category_data)
                     self.categories[category.entityId] = category
 
             # Create master category without subCategories to avoid circular reference
-            master_category_clean = {
-                k: v for k, v in master_category_data.items() if k != "subCategories"
-            }
+            master_category_clean = {k: v for k, v in master_category_data.items() if k != "subCategories"}
             master_category = MasterCategory(**master_category_clean)
             self.master_categories[master_category.entityId] = master_category
 
@@ -191,13 +182,9 @@ class YnabParser:
 
     def _get_delta_sort_key(self, delta_path: Path) -> int:
         start_version, _ = self._parse_delta_versions(delta_path.name)
-        return self._get_version_number_from_composite(
-            start_version, f"delta file '{delta_path.name}'"
-        )
+        return self._get_version_number_from_composite(start_version, f"delta file '{delta_path.name}'")
 
-    def _get_version_number_from_composite(
-        self, composite_version: str, context: str
-    ) -> int:
+    def _get_version_number_from_composite(self, composite_version: str, context: str) -> int:
         """Extract the version number from a composite version string using DeviceManager methods.
 
         Args:
@@ -208,15 +195,11 @@ class YnabParser:
             The version number from the latest version in the composite string
         """
         try:
-            latest_version = self.device_manager.get_latest_version_from_composite(
-                composite_version
-            )
+            latest_version = self.device_manager.get_latest_version_from_composite(composite_version)
             _, version_num = self.device_manager.parse_version_string(latest_version)
             return version_num
         except ValueError as e:
-            raise ValueError(
-                f"Failed to parse version number from '{composite_version}' in {context}: {e}"
-            )
+            raise ValueError(f"Failed to parse version number from '{composite_version}' in {context}: {e}")
 
     def _parse_delta_versions(self, filename: str) -> tuple[str, str]:
         if not filename.endswith(".ydiff"):
@@ -297,9 +280,7 @@ class YnabParser:
     def _get_version_end_number(self, delta_path: Path) -> int:
         """Extract the end version number from a delta filename."""
         _, end_version = self._parse_delta_versions(delta_path.name)
-        return self._get_version_number_from_composite(
-            end_version, f"delta file '{delta_path.name}'"
-        )
+        return self._get_version_number_from_composite(end_version, f"delta file '{delta_path.name}'")
 
     def get_available_versions(self) -> List[int]:
         """Get sorted list of available version numbers."""
@@ -354,15 +335,11 @@ class YnabParser:
             ValueError: If target_version is invalid or not available
         """
         if target_version < 0:
-            raise ValueError(
-                f"Version {target_version} is invalid: version must be non-negative"
-            )
+            raise ValueError(f"Version {target_version} is invalid: version must be non-negative")
 
         available_versions = self.get_available_versions()
         if target_version not in available_versions:
-            raise ValueError(
-                f"Version {target_version} not found in available versions: {available_versions}"
-            )
+            raise ValueError(f"Version {target_version} not found in available versions: {available_versions}")
 
     def _apply_deltas_up_to_version(self, target_version: int):
         """Apply delta files up to the specified target version.

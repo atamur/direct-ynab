@@ -37,11 +37,11 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "pytest-cov",
-    "black",
-    "flake8",
+    "ruff",
     "mypy",
     "assertpy",
     "pre-commit",
+    "docformatter",
 ]
 
 [project.scripts]
@@ -89,23 +89,6 @@ exclude_lines = [
 [tool.coverage.html]
 directory = "htmlcov"
 
-[tool.black]
-line-length = 88
-target-version = ['py312']
-include = '\.pyi?$'
-extend-exclude = '''
-/(
-  # directories
-  \.eggs
-  | \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | build
-  | dist
-)/
-'''
 
 [tool.mypy]
 python_version = "3.12"
@@ -116,6 +99,11 @@ mypy_path = "src"
 namespace_packages = true
 explicit_package_bases = true
 
-[flake8]
-max-line-length = 88
-ignore = ["E501", "W292", "F811", "F541"]
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+extend-exclude = ["tests/fixtures"]
+
+[tool.ruff.lint]
+select = ["E","F","W","I"]
+ignore = ["E501"]  # leave line length to the formatter

@@ -1,10 +1,8 @@
 """Tests for the @budget_version annotation system."""
 
-import pytest
 from pathlib import Path
-from unittest.mock import Mock, patch
 
-from ynab_io.parser import YnabParser
+import pytest
 from ynab_io.testing import budget_version
 
 

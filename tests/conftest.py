@@ -1,11 +1,11 @@
 """Pytest configuration and shared fixtures."""
 
-import pytest
 from pathlib import Path
+
+import pytest
 from assertpy import assert_that
 
-# Import fixtures from testing module to make them available globally
-from ynab_io.testing import version_aware_parser
+pytest_plugins = ["ynab_io.testing"]
 
 
 @pytest.fixture

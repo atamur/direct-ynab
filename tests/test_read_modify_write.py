@@ -1,13 +1,10 @@
 """Integration test for the read-modify-write cycle."""
 
-import json
-from pathlib import Path
 import shutil
 
+from ynab_io.device_manager import DeviceManager
 from ynab_io.parser import YnabParser
 from ynab_io.writer import YnabWriter
-from ynab_io.device_manager import DeviceManager
-from ynab_io.models import Transaction
 
 
 def test_read_modify_write_cycle(tmp_path):
@@ -55,7 +52,5 @@ def test_read_modify_write_cycle(tmp_path):
     budget2 = parser2.parse()
 
     # 5. Verify the change
-    modified_transaction = next(
-        t for t in budget2.transactions if t.entityId == transaction_to_modify.entityId
-    )
+    modified_transaction = next(t for t in budget2.transactions if t.entityId == transaction_to_modify.entityId)
     assert modified_transaction.memo == new_memo

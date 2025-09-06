@@ -1,10 +1,11 @@
 """Integration tests for version-aware parser fixture in real test scenarios."""
 
-import pytest
 from pathlib import Path
-from assertpy import assert_that
 
+import pytest
+from assertpy import assert_that
 from ynab_io.testing import budget_version
+
 from .conftest import assert_parser_collections_populated
 
 
@@ -23,9 +24,7 @@ class TestVersionAwareFixtureIntegration:
 
         # Should have applied some but not all deltas
         assert len(parser.applied_deltas) > 0
-        assert_that(len(parser.applied_deltas)).is_less_than(
-            len(parser._discover_delta_files())
-        )  # Not all deltas
+        assert_that(len(parser.applied_deltas)).is_less_than(len(parser._discover_delta_files()))  # Not all deltas
 
         # All applied deltas should be up to version 67
         for applied_delta in parser.applied_deltas:
@@ -38,14 +37,10 @@ class TestVersionAwareFixtureIntegration:
         parser = version_aware_parser
 
         # Should have applied deltas up to version 87
-        applied_versions = [
-            parser._get_version_end_number(delta) for delta in parser.applied_deltas
-        ]
+        applied_versions = [parser._get_version_end_number(delta) for delta in parser.applied_deltas]
         assert max(applied_versions) <= 87
         assert len(parser.applied_deltas) > 1  # More than just first delta
-        assert_that(len(parser.applied_deltas)).is_less_than(
-            len(parser._discover_delta_files())
-        )  # But not all deltas
+        assert_that(len(parser.applied_deltas)).is_less_than(len(parser._discover_delta_files()))  # But not all deltas
 
         # Should have some entities
         assert len(parser.accounts) >= 3
@@ -92,7 +87,5 @@ class TestVersionAwareFixtureRobustness:
         parser = version_aware_parser
 
         # Should always be base state (flexible count assertions)
-        assert (
-            len(parser.applied_deltas) == 0
-        )  # This is specific - no deltas should be applied
+        assert len(parser.applied_deltas) == 0  # This is specific - no deltas should be applied
         assert_parser_collections_populated(parser)

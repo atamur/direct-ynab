@@ -1,9 +1,10 @@
 """Backup and safety utilities for YNAB4 operations."""
 
 import zipfile
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 from typing import Union
+
 from filelock import FileLock
 
 

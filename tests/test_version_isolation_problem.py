@@ -5,13 +5,11 @@ isolate tests from newer deltas - it parses ALL deltas first, then restores,
 which can cause issues with unsupported data types from newer deltas.
 """
 
-import pytest
 from pathlib import Path
-from unittest.mock import Mock, patch, call
-import json
+from unittest.mock import patch
 
+import pytest
 from ynab_io.parser import YnabParser
-from ynab_io.testing import budget_version
 
 
 class TestVersionIsolationProblem:
@@ -49,9 +47,7 @@ class TestVersionIsolationProblem:
 
             # This is the problem: we processed deltas beyond version 67
             deltas_beyond_target = [v for v in versions_processed if v > 67]
-            assert (
-                len(deltas_beyond_target) > 0
-            ), "Expected to find deltas beyond version 67 were processed"
+            assert len(deltas_beyond_target) > 0, "Expected to find deltas beyond version 67 were processed"
 
     def test_desired_behavior_parse_only_up_to_version(self, test_budget_path):
         """Test showing the desired behavior: only parse deltas up to target version.
@@ -68,9 +64,7 @@ class TestVersionIsolationProblem:
         # Verify that only deltas up to version 67 were applied
         for delta_file in parser.applied_deltas:
             end_version = parser._get_version_end_number(delta_file)
-            assert (
-                end_version <= 67
-            ), f"Delta {delta_file.name} has end version {end_version} > target 67"
+            assert end_version <= 67, f"Delta {delta_file.name} has end version {end_version} > target 67"
 
     def test_old_behavior_vs_new_fixture_behavior(self, test_budget_path):
         """Test comparing old problematic behavior vs new fixed fixture behavior."""
@@ -94,15 +88,12 @@ class TestVersionIsolationProblem:
             parser_old.restore_to_version(target_version)  # Then restores
 
             # OLD behavior processed deltas beyond target version (the problem)
-            assert (
-                len(deltas_beyond_target) > 0
-            ), "Test setup issue: no deltas beyond target version found"
+            assert len(deltas_beyond_target) > 0, "Test setup issue: no deltas beyond target version found"
 
             deltas_beyond_target_were_processed = []
             for delta_file in deltas_beyond_target:
                 delta_was_processed = any(
-                    call_args[0][0] == delta_file
-                    for call_args in mock_apply_delta_old.call_args_list
+                    call_args[0][0] == delta_file for call_args in mock_apply_delta_old.call_args_list
                 )
                 if delta_was_processed:
                     deltas_beyond_target_were_processed.append(delta_file)
@@ -121,8 +112,7 @@ class TestVersionIsolationProblem:
             deltas_beyond_target_were_processed_new = []
             for delta_file in deltas_beyond_target:
                 delta_was_processed = any(
-                    call_args[0][0] == delta_file
-                    for call_args in mock_apply_delta_new.call_args_list
+                    call_args[0][0] == delta_file for call_args in mock_apply_delta_new.call_args_list
                 )
                 if delta_was_processed:
                     deltas_beyond_target_were_processed_new.append(delta_file)

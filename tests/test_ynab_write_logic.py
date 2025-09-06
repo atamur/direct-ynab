@@ -11,11 +11,10 @@ Following TDD Red-Green-Refactor methodology.
 """
 
 import json
-import pytest
 import uuid
-from pathlib import Path
-from unittest.mock import mock_open, patch
-from typing import Dict, Any, List, Optional
+from unittest.mock import patch
+
+import pytest
 
 
 class TestDeviceRegistration:
@@ -296,8 +295,8 @@ class TestYdiffFileGeneration:
 
     def test_add_entity_to_ydiff_items(self):
         """Test adding entities to .ydiff items array."""
+        from ynab_io.models import Account, Transaction
         from ynab_io.writer import YnabWriter
-        from ynab_io.models import Transaction, Account, Payee
 
         writer = YnabWriter()
 
@@ -361,8 +360,8 @@ class TestYdiffFileGeneration:
 
     def test_generate_complete_ydiff_file(self):
         """Test generating complete .ydiff file with entities."""
-        from ynab_io.writer import YnabWriter
         from ynab_io.models import Transaction
+        from ynab_io.writer import YnabWriter
 
         writer = YnabWriter()
 
@@ -411,9 +410,9 @@ class TestYdiffFileGeneration:
 
     def test_write_ydiff_and_update_ydevice(self, tmp_path):
         """Test writing a .ydiff file and updating the .ydevice file."""
-        from ynab_io.writer import YnabWriter
         from ynab_io.device_manager import DeviceManager
         from ynab_io.models import Transaction
+        from ynab_io.writer import YnabWriter
 
         # Setup test environment
         budget_dir = tmp_path / "budget"
@@ -612,9 +611,7 @@ class TestYdeviceUpdate:
             json.dump(initial_data, f, indent=2)
 
         # Update only knowledge
-        device_manager.update_device_knowledge(
-            ydevice_path=ydevice_path, new_knowledge="A-89"
-        )
+        device_manager.update_device_knowledge(ydevice_path=ydevice_path, new_knowledge="A-89")
 
         # All metadata should be preserved
         with open(ydevice_path, "r") as f:
@@ -648,9 +645,7 @@ class TestYdeviceUpdate:
         # Mock file write failure to test atomic behavior
         with patch("builtins.open", side_effect=IOError("Disk full")):
             with pytest.raises(IOError):
-                device_manager.update_device_knowledge(
-                    ydevice_path=ydevice_path, new_knowledge="A-89"
-                )
+                device_manager.update_device_knowledge(ydevice_path=ydevice_path, new_knowledge="A-89")
 
         # Original file should remain unchanged after failed update
         with open(ydevice_path, "r") as f:
@@ -672,9 +667,7 @@ class TestYdeviceUpdate:
             json.dump(initial_data, f)
 
         # Update knowledge
-        device_manager.update_device_knowledge(
-            ydevice_path=ydevice_path, new_knowledge="A-89"
-        )
+        device_manager.update_device_knowledge(ydevice_path=ydevice_path, new_knowledge="A-89")
 
         # Should create backup file
         backup_files = list(tmp_path.glob("A.ydevice.backup*"))
@@ -692,9 +685,9 @@ class TestIntegratedWriteWorkflow:
 
     def test_complete_write_workflow(self, tmp_path):
         """Test complete workflow from entity changes to .ydiff and .ydevice updates."""
-        from ynab_io.writer import YnabWriter
         from ynab_io.device_manager import DeviceManager
         from ynab_io.models import Transaction
+        from ynab_io.writer import YnabWriter
 
         # Setup test environment
         budget_dir = tmp_path / "budget"
@@ -765,16 +758,14 @@ class TestIntegratedWriteWorkflow:
 
     def test_handle_write_errors_gracefully(self, tmp_path):
         """Test graceful error handling during write operations."""
-        from ynab_io.writer import YnabWriter
         from ynab_io.device_manager import DeviceManager
+        from ynab_io.writer import YnabWriter
 
         device_manager = DeviceManager(budget_dir=tmp_path)
         writer = YnabWriter(device_manager=device_manager)
 
         # Try to write without proper setup
-        result = writer.write_changes(
-            entities={}, current_knowledge="A-86", short_id="A"
-        )
+        result = writer.write_changes(entities={}, current_knowledge="A-86", short_id="A")
 
         # Should fail gracefully
         assert result["success"] is False

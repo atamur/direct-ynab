@@ -1,14 +1,14 @@
 """Tests for backup and safety utilities."""
 
-import pytest
-import tempfile
 import shutil
-from pathlib import Path
-import zipfile
-from datetime import datetime
-from unittest.mock import patch
-import time
+import tempfile
 import threading
+import time
+import zipfile
+from pathlib import Path
+from unittest.mock import patch
+
+import pytest
 
 from src.ynab_io.safety import BackupManager, LockManager
 
@@ -26,16 +26,12 @@ class TestBackupManager:
         self.budget_dir.mkdir()
 
         # Create some mock files and subdirectories
-        (self.budget_dir / "Budget.ymeta").write_text(
-            '{"relativeDataFolderName": "TestBudget~12345.ynab4"}'
-        )
+        (self.budget_dir / "Budget.ymeta").write_text('{"relativeDataFolderName": "TestBudget~12345.ynab4"}')
 
         data_dir = self.budget_dir / "TestBudget~12345.ynab4"
         data_dir.mkdir()
 
-        (data_dir / "Budget.yfull").write_text(
-            '{"fileMetaData": {"budgetDataVersion": "4.2"}}'
-        )
+        (data_dir / "Budget.yfull").write_text('{"fileMetaData": {"budgetDataVersion": "4.2"}}')
         (data_dir / "devices").mkdir()
         (data_dir / "devices" / "A").mkdir(parents=True)
         (data_dir / "devices" / "A" / "Budget.ydiff").write_text('{"changes": []}')
@@ -114,9 +110,7 @@ class TestLockManager:
         self.budget_dir.mkdir()
 
         # Create Budget.ymeta file
-        (self.budget_dir / "Budget.ymeta").write_text(
-            '{"relativeDataFolderName": "TestBudget~12345.ynab4"}'
-        )
+        (self.budget_dir / "Budget.ymeta").write_text('{"relativeDataFolderName": "TestBudget~12345.ynab4"}')
 
         # Create data directory
         data_dir = self.budget_dir / "TestBudget~12345.ynab4"

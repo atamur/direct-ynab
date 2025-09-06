@@ -10,13 +10,11 @@ This module handles:
 
 import json
 import re
-from pathlib import Path
-from typing import Dict, Any, List, Optional, Union, Tuple
 from datetime import datetime
+from typing import Any, Dict, List, Optional, Tuple, Union
 
-from .models import Account, Payee, Transaction, Budget
 from .device_manager import DeviceManager
-
+from .models import Account, Payee, Transaction
 
 # Constants for YNAB4 .ydiff files
 DEFAULT_DATA_VERSION = "4.2"
@@ -147,9 +145,7 @@ class YnabWriter:
         """Serialize payee entity to .ydiff format."""
         return {"name": payee.name, "enabled": payee.enabled}
 
-    def create_tombstone_item(
-        self, entity_id: str, entity_type: str, entity_version: str
-    ) -> Dict[str, Any]:
+    def create_tombstone_item(self, entity_id: str, entity_type: str, entity_version: str) -> Dict[str, Any]:
         """Create a tombstone (deletion) item.
 
         Args:
@@ -255,9 +251,7 @@ class YnabWriter:
         except ValueError:
             return False
 
-    def write_changes(
-        self, entities: Dict[str, List], current_knowledge: str, short_id: str
-    ) -> Dict[str, Any]:
+    def write_changes(self, entities: Dict[str, List], current_knowledge: str, short_id: str) -> Dict[str, Any]:
         """Write entity changes to .ydiff file and update .ydevice.
 
         Args:
@@ -288,9 +282,7 @@ class YnabWriter:
             )
 
             # Generate filename
-            ydiff_filename = self.generate_ydiff_filename(
-                current_knowledge, new_version
-            )
+            ydiff_filename = self.generate_ydiff_filename(current_knowledge, new_version)
 
             # Write .ydiff file
             device_dir = self.device_manager.get_device_dir_path(device_guid)
@@ -300,9 +292,7 @@ class YnabWriter:
 
             # Update .ydevice file
             ydevice_path = self.device_manager.get_ydevice_file_path(short_id)
-            self.device_manager.update_device_knowledge(
-                ydevice_path=ydevice_path, new_knowledge=new_version
-            )
+            self.device_manager.update_device_knowledge(ydevice_path=ydevice_path, new_knowledge=new_version)
 
             return {
                 "success": True,

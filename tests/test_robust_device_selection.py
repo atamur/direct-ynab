@@ -1,8 +1,6 @@
 """Specific tests for robust device selection in multi-device scenarios."""
 
 import json
-import pytest
-from pathlib import Path
 
 from ynab_io.parser import YnabParser
 
@@ -10,9 +8,7 @@ from ynab_io.parser import YnabParser
 class TestRobustDeviceSelection:
     """Tests for robust device selection based on knowledge versions."""
 
-    def test_parser_chooses_device_with_latest_knowledge_when_alphabetically_later(
-        self, tmp_path
-    ):
+    def test_parser_chooses_device_with_latest_knowledge_when_alphabetically_later(self, tmp_path):
         """Test that parser chooses device with latest knowledge even when it's alphabetically later."""
         # This test will definitely fail with current implementation
         # which just picks the first device alphabetically
