@@ -16,11 +16,6 @@ When analyzing new external libraries, use this template to ensure consistency:
 ### Overview
 Brief description of what the library does and its primary purpose.
 
-### Key Capabilities
-1. **Feature 1**: Description
-2. **Feature 2**: Description
-3. **Feature 3**: Description
-
 ### Critical Limitations
 ❌ **Limitation 1**: Description of what it cannot do
 ❌ **Limitation 2**: Another important limitation
@@ -32,9 +27,6 @@ Brief description of what the library does and its primary purpose.
 1. ✅ **Use for**: What we should use it for
 2. ⚠️ **Extend for**: What we need to add/extend
 3. ❌ **Avoid**: What we should not use it for
-
-### Next Steps
-- Task references and implementation notes
 ```
 
 ## pydantic (v2.11)
@@ -57,3 +49,20 @@ pydantic is a Python library for data validation and settings management using P
 
 1. **✅ Use for Data Models**: Pydantic is used to define the data models for the YNAB entities in `src/ynab_io/models.py`.
 2. **✅ Use for Data Validation**: Pydantic is used to validate the data from the YNAB files.
+
+## rich (v13.0.0+)
+
+**Repository**: https://github.com/Textualize/rich
+**Installation**: `pip install rich>=13.0.0`
+**Status**: ✅ Installed and Added to pyproject.toml
+
+### Overview
+
+Rich is a Python library for creating rich text and beautiful formatting in the terminal. It provides sophisticated console output including tables, progress bars, syntax highlighting, and more.
+
+### Integration Strategy
+
+1. ✅ **Use for CLI Tables**: Enhanced table output for `accounts list` and `budget show` commands
+2. ✅ **Use for Console Output**: Professional terminal output formatting
+3. ⚠️ **Extend for**: Future CLI enhancements (progress bars, better error formatting)
+4. ❌ **Avoid**: Heavy styling that might interfere with script automation or parsing

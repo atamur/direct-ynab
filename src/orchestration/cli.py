@@ -9,12 +9,19 @@ from typing import Annotated, TypeVar
 
 import typer
 from filelock import Timeout
+from rich.console import Console
+from rich.table import Table
 
 from ynab_io.parser import YnabParser
 from ynab_io.safety import BackupManager, LockManager
 
 # Constants
 DEFAULT_ITEM_LIMIT = 3
+
+
+def _create_console() -> Console:
+    """Create a Rich console instance for table output."""
+    return Console()
 
 
 # Error message templates
@@ -239,13 +246,55 @@ def display_transactions(parser: YnabParser, limit: int = DEFAULT_ITEM_LIMIT) ->
         typer.echo(f"    Date: {transaction.date}")
 
 
+def display_accounts_table(parser: YnabParser, limit: int = DEFAULT_ITEM_LIMIT) -> None:
+    """
+    Display account details in a formatted table.
+
+    Args:
+        parser: YnabParser object containing accounts
+        limit: Maximum number of accounts to display
+    """
+    console = _create_console()
+    table = Table(show_header=True, header_style="bold magenta")
+    table.add_column("Account Name")
+    table.add_column("Account Type")
+
+    for account in list(parser.accounts.values())[:limit]:
+        table.add_row(account.accountName, account.accountType)
+
+    console.print(table)
+
+
+def display_transactions_table(parser: YnabParser, limit: int = DEFAULT_ITEM_LIMIT) -> None:
+    """
+    Display transaction details in a formatted table.
+
+    Args:
+        parser: YnabParser object containing transactions
+        limit: Maximum number of transactions to display
+    """
+    console = _create_console()
+    table = Table(show_header=True, header_style="bold magenta")
+    table.add_column("Payee")
+    table.add_column("Amount")
+    table.add_column("Date")
+
+    for transaction in list(parser.transactions.values())[:limit]:
+        payee = parser.payees.get(transaction.payeeId)
+        payee_name = payee.name if payee else "Unknown Payee"
+        table.add_row(payee_name, format_currency(transaction.amount), str(transaction.date))
+
+    console.print(table)
+
+
 @budget_app.command("show")
 def budget_show(
     budget_path: Annotated[str, typer.Option("--budget-path", help="Path to the .ynab4 budget directory")],
+    output_format: Annotated[str, typer.Option("--format", help="Output format: text or table")] = "text",
 ) -> None:
     """Load and display basic budget information.
 
-    Usage: [command] budget show --budget-path /path/to/budget.ynab4
+    Usage: [command] budget show --budget-path /path/to/budget.ynab4 --format table
     """
     try:
         with locked_budget_operation(budget_path) as path:
@@ -258,6 +307,12 @@ def budget_show(
             typer.echo(f"Accounts: {len(parser.accounts)}")
             typer.echo(f"Payees: {len(parser.payees)}")
             typer.echo(f"Transactions: {len(parser.transactions)}")
+
+            # Display transactions
+            if output_format == "table":
+                display_transactions_table(parser)
+            else:
+                display_transactions(parser)
 
     except Exception as e:
         handle_budget_error("loading budget", e)
@@ -287,10 +342,11 @@ def backup(
 @accounts_app.command("list")
 def accounts_list(
     budget_path: Annotated[str, typer.Option("--budget-path", help="Path to the .ynab4 budget directory")],
+    output_format: Annotated[str, typer.Option("--format", help="Output format: text or table")] = "text",
 ) -> None:
     """Display account details.
 
-    Usage: [command] accounts list --budget-path /path/to/budget.ynab4
+    Usage: [command] accounts list --budget-path /path/to/budget.ynab4 --format table
     """
     try:
         with locked_budget_operation(budget_path) as path:
@@ -299,7 +355,10 @@ def accounts_list(
             parser.apply_deltas()
 
             # Display accounts
-            display_accounts(parser)
+            if output_format == "table":
+                display_accounts_table(parser)
+            else:
+                display_accounts(parser)
 
     except Exception as e:
         handle_budget_error("listing accounts", e)

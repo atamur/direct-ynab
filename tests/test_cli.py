@@ -232,6 +232,41 @@ class TestBudgetCommands:
         assert_that(result.stdout).matches(r"Payees: \d+")
         assert_that(result.stdout).matches(r"Transactions: \d+")
 
+    def test_budget_show_with_table_format(self, runner, test_budget_path):
+        """Test budget show command with table format shows transactions in formatted table."""
+        result = runner.invoke(app, ["budget", "show", "--budget-path", str(test_budget_path), "--format", "table"])
+
+        assert_that(result.exit_code).is_equal_to(0)
+        assert_that(result.stdout).contains("Budget loaded successfully")
+        # Rich table should contain these table formatting characters
+        assert "┏" in result.stdout  # Top-left corner (double line)
+        assert "┓" in result.stdout  # Top-right corner (double line)
+        assert "┃" in result.stdout  # Vertical border (double line)
+        assert "Payee" in result.stdout  # Table header
+        assert "Amount" in result.stdout  # Table header
+        assert "Date" in result.stdout  # Table header
+
+    def test_budget_show_with_text_format(self, runner, test_budget_path):
+        """Test budget show command with text format shows original output."""
+        result = runner.invoke(app, ["budget", "show", "--budget-path", str(test_budget_path), "--format", "text"])
+
+        assert_that(result.exit_code).is_equal_to(0)
+        assert_that(result.stdout).contains("Budget loaded successfully")
+        assert_that(result.stdout).contains("Transaction Details")
+        # Should not contain table formatting
+        assert "┏" not in result.stdout
+        assert "┃" not in result.stdout
+
+    def test_budget_show_default_format_is_text(self, runner, test_budget_path):
+        """Test budget show command defaults to text format when no format specified."""
+        result = runner.invoke(app, ["budget", "show", "--budget-path", str(test_budget_path)])
+
+        assert_that(result.exit_code).is_equal_to(0)
+        assert_that(result.stdout).contains("Budget loaded successfully")
+        # Should not contain table formatting by default
+        assert "┏" not in result.stdout
+        assert "┃" not in result.stdout
+
     def test_budget_show_invalid_path(self, runner):
         """Test budget show command with invalid budget path."""
         result = runner.invoke(app, ["budget", "show", "--budget-path", "nonexistent/path"])
@@ -281,6 +316,40 @@ class TestAccountsCommands:
         assert result.exit_code == 0
         assert "Account Details" in result.stdout
         assert "Type:" in result.stdout
+
+    def test_accounts_list_with_table_format(self, runner, test_budget_path):
+        """Test accounts list command with table format shows formatted table."""
+        result = runner.invoke(app, ["accounts", "list", "--budget-path", str(test_budget_path), "--format", "table"])
+
+        assert result.exit_code == 0
+        # Rich table should contain these table formatting characters
+        assert "┏" in result.stdout  # Top-left corner (double line)
+        assert "┓" in result.stdout  # Top-right corner (double line)
+        assert "┃" in result.stdout  # Vertical border (double line)
+        assert "Account Name" in result.stdout  # Table header
+        assert "Account Type" in result.stdout  # Table header
+
+    def test_accounts_list_with_text_format(self, runner, test_budget_path):
+        """Test accounts list command with text format shows original output."""
+        result = runner.invoke(app, ["accounts", "list", "--budget-path", str(test_budget_path), "--format", "text"])
+
+        assert result.exit_code == 0
+        assert "Account Details" in result.stdout
+        assert "Type:" in result.stdout
+        # Should not contain table formatting
+        assert "┏" not in result.stdout
+        assert "┃" not in result.stdout
+
+    def test_accounts_list_default_format_is_text(self, runner, test_budget_path):
+        """Test accounts list command defaults to text format when no format specified."""
+        result = runner.invoke(app, ["accounts", "list", "--budget-path", str(test_budget_path)])
+
+        assert result.exit_code == 0
+        assert "Account Details" in result.stdout
+        assert "Type:" in result.stdout
+        # Should not contain table formatting by default
+        assert "┏" not in result.stdout
+        assert "┃" not in result.stdout
 
     def test_accounts_list_invalid_path(self, runner):
         """Test accounts list command with invalid budget path."""
