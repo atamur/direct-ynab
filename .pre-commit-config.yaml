@@ -20,7 +20,7 @@ repos:
     hooks:
       - id: pytest-coverage
         name: pytest with coverage
-        entry: bash -lc 'direnv exec . pytest -q --cov=src --cov-fail-under=85'
+        entry: bash -lc 'direnv exec . pytest -q --cov=src --cov-fail-under=90'
         language: system
         pass_filenames: false
         always_run: true
