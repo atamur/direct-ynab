@@ -43,7 +43,7 @@ dev = [
 ]
 
 [project.scripts]
-ynab-ai = "ynab_io.orchestration.cli:main"
+ynab-ai = "orchestration.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
