@@ -13,6 +13,7 @@ from .models import (
     MonthlyBudget,
     MonthlyCategoryBudget,
     Payee,
+    PayeeStringCondition,
     ScheduledTransaction,
     Transaction,
 )
@@ -38,6 +39,7 @@ class YnabParser:
         self.monthly_budgets: dict[str, MonthlyBudget] = {}
         self.monthly_category_budgets: dict[str, MonthlyCategoryBudget] = {}
         self.scheduled_transactions: dict[str, ScheduledTransaction] = {}
+        self.payee_string_conditions: dict[str, PayeeStringCondition] = {}
 
         # Version tracking state
         self.applied_deltas: list[Path] = []
@@ -127,6 +129,7 @@ class YnabParser:
             monthly_budgets=list(self.monthly_budgets.values()),
             monthly_category_budgets=list(self.monthly_category_budgets.values()),
             scheduled_transactions=list(self.scheduled_transactions.values()),
+            payee_string_conditions=list(self.payee_string_conditions.values()),
         )
 
     def _parse_entities(self, entity_data_list, model_class, collection):
@@ -155,6 +158,7 @@ class YnabParser:
             # Basic entities
             "account": (self.accounts, Account),
             "payee": (self.payees, Payee),
+            "payeeStringCondition": (self.payee_string_conditions, PayeeStringCondition),
             "transaction": (self.transactions, Transaction),
             # Category entities
             "masterCategory": (self.master_categories, MasterCategory),
@@ -308,6 +312,7 @@ class YnabParser:
             "monthly_budgets": copy.deepcopy(self.monthly_budgets),
             "monthly_category_budgets": copy.deepcopy(self.monthly_category_budgets),
             "scheduled_transactions": copy.deepcopy(self.scheduled_transactions),
+            "payee_string_conditions": copy.deepcopy(self.payee_string_conditions),
         }
 
     def _restore_from_state(self, state: dict[str, Any]):
@@ -324,6 +329,7 @@ class YnabParser:
         self.monthly_budgets = copy.deepcopy(state["monthly_budgets"])
         self.monthly_category_budgets = copy.deepcopy(state["monthly_category_budgets"])
         self.scheduled_transactions = copy.deepcopy(state["scheduled_transactions"])
+        self.payee_string_conditions = copy.deepcopy(state["payee_string_conditions"])
 
     def _validate_target_version(self, target_version: int):
         """Validate that target version is valid and available.

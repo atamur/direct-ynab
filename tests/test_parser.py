@@ -767,6 +767,199 @@ class TestYnabParser:
             assert isinstance(mcb, MonthlyCategoryBudget)
 
 
+class TestPayeeStringConditionParsing:
+    """Test cases for PayeeStringCondition parsing and handling."""
+
+    @pytest.fixture
+    def test_budget_path(self):
+        """Path to the test budget fixture."""
+        return Path("tests/fixtures/My Test Budget~E0C1460F.ynab4")
+
+    @pytest.fixture
+    def parser(self, test_budget_path):
+        """YnabParser instance using test fixture."""
+        return YnabParser(test_budget_path)
+
+    def test_parser_initializes_payee_string_conditions_collection(self, parser):
+        """Test that parser initializes with empty payee_string_conditions collection."""
+        assert hasattr(parser, "payee_string_conditions")
+        assert parser.payee_string_conditions == {}
+        assert isinstance(parser.payee_string_conditions, dict)
+
+    def test_parse_creates_payee_string_condition_models(self, parser):
+        """Test that parse() creates correct PayeeStringCondition models from delta files."""
+        from ynab_io.models import PayeeStringCondition
+
+        parser.parse()
+
+        # Should have payee string conditions from delta files
+        assert_that(parser.payee_string_conditions).is_not_empty()
+        assert_that(len(parser.payee_string_conditions)).is_greater_than(0)
+
+        # Test a sample payee string condition
+        psc = next(iter(parser.payee_string_conditions.values()))
+
+        # Verify it's a PayeeStringCondition model with expected fields
+        assert isinstance(psc, PayeeStringCondition)
+        assert hasattr(psc, "entityId")
+        assert hasattr(psc, "operand")
+        assert hasattr(psc, "operator")
+        assert hasattr(psc, "parentPayeeId")
+        assert hasattr(psc, "entityVersion")
+        assert hasattr(psc, "isTombstone")
+        assert hasattr(psc, "madeWithKnowledge")
+        assert hasattr(psc, "isResolvedConflict")
+
+    def test_apply_delta_handles_payee_string_condition_processing(self, parser):
+        """Test that _apply_delta correctly processes payee string condition changes."""
+        parser.parse()
+        initial_psc_count = len(parser.payee_string_conditions)
+
+        # Create a mock delta with payee string condition update
+        mock_delta = {
+            "items": [
+                {
+                    "entityId": "TEST-PSC-ID",
+                    "entityType": "payeeStringCondition",
+                    "isTombstone": False,
+                    "entityVersion": "A-999",
+                    "operand": "Test Store",
+                    "operator": "Contains",
+                    "parentPayeeId": "TEST-PAYEE-ID",
+                    "madeWithKnowledge": None,
+                    "isResolvedConflict": False,
+                }
+            ]
+        }
+
+        # Apply the mock delta
+        with patch("builtins.open", mock_open(read_data=json.dumps(mock_delta))):
+            parser._apply_delta(Path("test.ydiff"))
+
+        # Should have added the new payee string condition
+        assert len(parser.payee_string_conditions) == initial_psc_count + 1
+        assert "TEST-PSC-ID" in parser.payee_string_conditions
+
+        # Verify the properties are correct
+        new_psc = parser.payee_string_conditions["TEST-PSC-ID"]
+        assert new_psc.operand == "Test Store"
+        assert new_psc.operator == "Contains"
+        assert new_psc.parentPayeeId == "TEST-PAYEE-ID"
+
+    def test_apply_delta_handles_payee_string_condition_updates(self, parser):
+        """Test that _apply_delta correctly updates existing payee string condition entities."""
+        from ynab_io.models import PayeeStringCondition
+
+        parser.parse()
+
+        # Add an existing payee string condition first
+        existing_psc = PayeeStringCondition(
+            entityId="EXISTING-PSC",
+            operand="Old Store Name",
+            operator="Is",
+            parentPayeeId="EXISTING-PAYEE",
+            entityVersion="A-10",
+            isTombstone=False,
+            madeWithKnowledge=None,
+            isResolvedConflict=False,
+        )
+        parser.payee_string_conditions["EXISTING-PSC"] = existing_psc
+
+        # Create a mock delta that updates the existing entity
+        mock_delta = {
+            "items": [
+                {
+                    "entityId": "EXISTING-PSC",
+                    "entityType": "payeeStringCondition",
+                    "isTombstone": False,
+                    "entityVersion": "A-20",  # Higher version
+                    "operand": "New Store Name",  # Updated operand
+                    "operator": "Contains",  # Updated operator
+                }
+            ]
+        }
+
+        # Apply the mock delta
+        with patch("builtins.open", mock_open(read_data=json.dumps(mock_delta))):
+            parser._apply_delta(Path("test.ydiff"))
+
+        # Should have updated the existing payee string condition
+        updated_psc = parser.payee_string_conditions["EXISTING-PSC"]
+        assert updated_psc.operand == "New Store Name"  # Should be updated
+        assert updated_psc.operator == "Contains"  # Should be updated
+        assert updated_psc.entityVersion == "A-20"  # Version should be updated
+        assert updated_psc.parentPayeeId == "EXISTING-PAYEE"  # Should remain the same
+
+    def test_apply_delta_handles_payee_string_condition_tombstone_deletions(self, parser):
+        """Test that _apply_delta correctly handles tombstone deletions of payee string conditions."""
+        from ynab_io.models import PayeeStringCondition
+
+        parser.parse()
+
+        # Add a payee string condition to delete
+        test_psc = PayeeStringCondition(
+            entityId="DELETE-ME-PSC",
+            operand="Delete This",
+            operator="Is",
+            parentPayeeId="DELETE-PAYEE",
+            entityVersion="A-5",
+            isTombstone=False,
+            madeWithKnowledge=None,
+            isResolvedConflict=False,
+        )
+        parser.payee_string_conditions["DELETE-ME-PSC"] = test_psc
+
+        # Create a mock delta with tombstone entry
+        mock_delta = {
+            "items": [
+                {
+                    "entityId": "DELETE-ME-PSC",
+                    "entityType": "payeeStringCondition",
+                    "isTombstone": True,
+                    "entityVersion": "A-10",
+                }
+            ]
+        }
+
+        # Apply the mock delta with tombstone
+        with patch("builtins.open", mock_open(read_data=json.dumps(mock_delta))):
+            parser._apply_delta(Path("test.ydiff"))
+
+        # The entity should be removed
+        assert "DELETE-ME-PSC" not in parser.payee_string_conditions
+
+    def test_final_budget_includes_payee_string_conditions_collection(self, parser):
+        """Test that the final Budget object includes payee_string_conditions collection."""
+        from ynab_io.models import PayeeStringCondition
+
+        budget = parser.parse()
+
+        # Verify Budget object has payee_string_conditions attribute
+        assert hasattr(budget, "payee_string_conditions")
+        assert isinstance(budget.payee_string_conditions, list)
+
+        # Should contain PayeeStringCondition instances (when they exist)
+        for psc in budget.payee_string_conditions:
+            assert isinstance(psc, PayeeStringCondition)
+
+    def test_get_entity_mapping_includes_payee_string_condition(self, parser):
+        """Test that _get_entity_mapping includes payeeStringCondition entity type."""
+        collection, model = parser._get_entity_mapping("payeeStringCondition")
+
+        assert collection is not None
+        assert model is not None
+        assert collection is parser.payee_string_conditions
+
+    def test_parser_no_longer_logs_warnings_for_payee_string_condition(self, parser):
+        """Test that parser no longer logs warnings for payeeStringCondition entity type."""
+        with patch("ynab_io.parser.logging.warning") as mock_warning:
+            parser.parse()
+
+            # Check that no warnings were logged for payeeStringCondition
+            warning_calls = [call for call in mock_warning.call_args_list if "payeeStringCondition" in str(call)]
+            assert len(warning_calls) == 0
+
+
 class TestYnabParserVersionParsing:
     """Test cases for version parsing with composite version strings."""
 

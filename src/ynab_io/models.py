@@ -98,6 +98,20 @@ class ScheduledTransaction(BaseModel):
     date: str | None = None
 
 
+class PayeeStringCondition(BaseModel):
+    """String condition for payee matching in YNAB4."""
+
+    model_config = ConfigDict(extra="ignore")
+    entityId: str
+    operand: str
+    operator: str
+    parentPayeeId: str
+    entityVersion: str
+    isTombstone: bool
+    madeWithKnowledge: Any | None = None
+    isResolvedConflict: bool
+
+
 class Budget(BaseModel):
     accounts: list[Account]
     payees: list[Payee]
@@ -107,3 +121,4 @@ class Budget(BaseModel):
     monthly_budgets: list[MonthlyBudget]
     monthly_category_budgets: list[MonthlyCategoryBudget]
     scheduled_transactions: list[ScheduledTransaction]
+    payee_string_conditions: list[PayeeStringCondition]
