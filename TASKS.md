@@ -29,10 +29,35 @@ Before marking any task as complete, ALWAYS verify these items:
 
 #### Phase 2: Advanced CLI Reporting
 
-*   **TASK 2.12: (TDD) Integrate BudgetCalculator into CLI**
-    *   **GOAL:** Create a new `report` command in the CLI that uses the `BudgetCalculator`.
-    *   **APPROACH:** The `report` command will be added to `src/orchestration/cli.py`. It will initialize the `YnabParser`, get the `Budget` object, create a `BudgetCalculator`, and then call the appropriate methods based on the user's arguments (e.g., `report accounts`, `report budget --month 2025-09`).
-    *   **TEST_CASES:** The `report` command correctly calls the `BudgetCalculator` methods and displays the formatted output. The `--month` option is correctly parsed.
+ *   **TASK 2.13: (TDD) Refactor CLI to use Subcommands**
+     *   **GOAL:** Reorganize the CLI to use a subcommand structure for better organization and scalability.
+     *   **APPROACH:**
+         1.  Create a new `budget` subcommand.
+         2.  Move the existing `load` command to be a subcommand of `budget` calledand rename to `show`.
+         3.  Create a new `accounts` subcommand.
+         4.  Create a new `list` command under `accounts` that displays accounts.
+         5.  Remove the `inspect` command and move its functionality to the new subcommands.
+     *   **TEST_CASES:**
+         *   `ynab-ai budget show --budget-path <path>` runs successfully.
+         *   `ynab-ai accounts list --budget-path <path>` runs successfully.
+
+ *   **TASK 2.14: (TDD) Improve CLI Output with Rich Tables**
+     *   **GOAL:** Enhance the CLI output by using tables for better readability.
+     *   **APPROACH:**
+         1.  Integrate the `rich` library for creating tables. Introduce an output format flag
+         2.  Update the `accounts list` command to display accounts in a table when format set to table.
+         3.  Update the `budget show` command to display transactions in a table when format set to table.
+     *   **TEST_CASES:**
+         *   The `accounts list` command output is a formatted table.
+         *   The `budget show` command output includes a formatted table for transactions.
+
+ *   **TASK 2.15: (TDD) Add `transactions` Subcommand**
+     *   **GOAL:** Create a dedicated subcommand for transaction-related operations.
+     *   **APPROACH:**
+         1.  Create a new `transactions` subcommand.
+         2.  Create a `list` command under `transactions` that displays recent transactions.
+     *   **TEST_CASES:**
+         *   `ynab-ai transactions list --budget-path <path> ` runs successfully and displays transactions in a table.
 
 #### Phase 3: Data Transformation and AI Preparation
 
