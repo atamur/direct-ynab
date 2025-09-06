@@ -37,11 +37,20 @@ T = TypeVar("T")
 # Create the Typer app
 app = typer.Typer(help="YNAB4 Budget CLI Tool")
 
+# Create subcommand groups
+budget_app = typer.Typer(help="Budget-related commands")
+accounts_app = typer.Typer(help="Account-related commands")
+
+# Add subcommands to main app
+app.add_typer(budget_app, name="budget")
+app.add_typer(accounts_app, name="accounts")
+
 
 @contextmanager
 def locked_budget_operation(budget_path: str) -> Generator[Path, None, None]:
     """
     Context manager that validates budget path and acquires lock for safe operations.
+    Used by budget show, accounts list, and backup commands.
 
     Args:
         budget_path: String path to budget directory
@@ -230,14 +239,16 @@ def display_transactions(parser: YnabParser, limit: int = DEFAULT_ITEM_LIMIT) ->
         typer.echo(f"    Date: {transaction.date}")
 
 
-@app.command()
-def load(
-    budget_path: Annotated[str, typer.Argument(help="Path to the .ynab4 budget directory")],
+@budget_app.command("show")
+def budget_show(
+    budget_path: Annotated[str, typer.Option("--budget-path", help="Path to the .ynab4 budget directory")],
 ) -> None:
-    """Load and display basic budget information."""
+    """Load and display basic budget information.
+
+    Usage: [command] budget show --budget-path /path/to/budget.ynab4
+    """
     try:
         with locked_budget_operation(budget_path) as path:
-            # Load the budget
             parser = YnabParser(path)
             parser.parse()
             parser.apply_deltas()
@@ -254,9 +265,12 @@ def load(
 
 @app.command()
 def backup(
-    budget_path: Annotated[str, typer.Argument(help="Path to the .ynab4 budget directory")],
+    budget_path: Annotated[str, typer.Option("--budget-path", help="Path to the .ynab4 budget directory")],
 ) -> None:
-    """Create a backup of the budget."""
+    """Create a backup of the budget.
+
+    Usage: [command] backup --budget-path /path/to/budget.ynab4
+    """
     try:
         with locked_budget_operation(budget_path) as path:
             # Create backup
@@ -270,31 +284,25 @@ def backup(
         handle_budget_error("creating backup", e)
 
 
-@app.command()
-def inspect(
-    budget_path: Annotated[str, typer.Argument(help="Path to the .ynab4 budget directory")],
-    accounts: Annotated[bool, typer.Option("--accounts", help="Show account details")] = False,
-    transactions: Annotated[bool, typer.Option("--transactions", help="Show transaction details")] = False,
+@accounts_app.command("list")
+def accounts_list(
+    budget_path: Annotated[str, typer.Option("--budget-path", help="Path to the .ynab4 budget directory")],
 ) -> None:
-    """Inspect budget details (accounts, transactions)."""
+    """Display account details.
+
+    Usage: [command] accounts list --budget-path /path/to/budget.ynab4
+    """
     try:
         with locked_budget_operation(budget_path) as path:
-            # Load the budget
             parser = YnabParser(path)
             parser.parse()
             parser.apply_deltas()
 
-            # If no specific option, show all
-            show_all = not (accounts or transactions)
-
-            if show_all or accounts:
-                display_accounts(parser)
-
-            if show_all or transactions:
-                display_transactions(parser)
+            # Display accounts
+            display_accounts(parser)
 
     except Exception as e:
-        handle_budget_error("inspecting budget", e)
+        handle_budget_error("listing accounts", e)
 
 
 def main() -> None:

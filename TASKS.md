@@ -25,21 +25,7 @@ Before marking any task as complete, ALWAYS verify these items:
 
 ### AI Agent Task Backlog : IN PROGRESS
 
-**CURRENT STATUS:** Phase 1 and Phase 2 completed with comprehensive TDD implementation
-
 #### Phase 2: Advanced CLI Reporting
-
- *   **TASK 2.13: (TDD) Refactor CLI to use Subcommands**
-     *   **GOAL:** Reorganize the CLI to use a subcommand structure for better organization and scalability.
-     *   **APPROACH:**
-         1.  Create a new `budget` subcommand.
-         2.  Move the existing `load` command to be a subcommand of `budget` calledand rename to `show`.
-         3.  Create a new `accounts` subcommand.
-         4.  Create a new `list` command under `accounts` that displays accounts.
-         5.  Remove the `inspect` command and move its functionality to the new subcommands.
-     *   **TEST_CASES:**
-         *   `ynab-ai budget show --budget-path <path>` runs successfully.
-         *   `ynab-ai accounts list --budget-path <path>` runs successfully.
 
  *   **TASK 2.14: (TDD) Improve CLI Output with Rich Tables**
      *   **GOAL:** Enhance the CLI output by using tables for better readability.
@@ -58,21 +44,6 @@ Before marking any task as complete, ALWAYS verify these items:
          2.  Create a `list` command under `transactions` that displays recent transactions.
      *   **TEST_CASES:**
          *   `ynab-ai transactions list --budget-path <path> ` runs successfully and displays transactions in a table.
-
-#### Phase 3: Data Transformation and AI Preparation
-
-### AI Agent Task Backlog : TASKS DONE
-
-#### Phase 2: Advanced CLI Reporting
-
-  * **TASK 2.10: (TDD) Implement Account Balance Calculation in BudgetCalculator** ✅ **COMPLETED**
-      * **GOAL:** Implement `get_account_balance(account_id)` in `BudgetCalculator`.
-      * **APPROACH:** The method will iterate through all transactions associated with the given `account_id`. It will sum up the `amount` of each transaction to calculate the total balance. It will also differentiate between cleared and uncleared transactions.
-      * **TEST_CASES:** Correctly calculates balances for accounts with no transactions, only cleared transactions, only uncleared transactions, and a mix of both.
-      * **COMPLETED:** 2025-09-05 - Implemented `get_account_balance` in `BudgetCalculator` and verified with comprehensive tests. All tests passed, and linting issues were resolved by configuring `flake8` to align with `black`'s formatting.
-      * **LEARNINGS:**
-        - **Linting Configuration**: It's crucial to ensure linting tools (like `flake8`) are correctly configured to match code formatters (like `black`) to avoid unnecessary conflicts. Using a `.flake8` file is a reliable way to achieve this when `pyproject.toml` integration is problematic.
-        - **Automated Formatting**: Tools like `black` are invaluable for maintaining code style and reducing manual linting fixes.
 
 #### Phase 3: Data Transformation and AI Preparation
 
@@ -273,3 +244,25 @@ Before marking any task as complete, ALWAYS verify these items:
         - **Code Quality Review Value**: The tdd-red-green-refactor → code-quality-reviewer pipeline identified critical issues (flawed business logic, missing type annotations) that needed fixing for production-ready code.
         - **Business Logic Correctness**: Initial implementation incorrectly matched transactions by amount instead of using proper category relationships. Proper category-based matching is essential for accurate budget reporting.
         - **Type Safety**: Adding proper type annotations with `Generator` and model imports ensures type safety and catches potential runtime errors during development.
+
+  * **TASK 2.10: (TDD) Implement Account Balance Calculation in BudgetCalculator** ✅ **COMPLETED**
+      * **GOAL:** Implement `get_account_balance(account_id)` in `BudgetCalculator`.
+      * **APPROACH:** The method will iterate through all transactions associated with the given `account_id`. It will sum up the `amount` of each transaction to calculate the total balance. It will also differentiate between cleared and uncleared transactions.
+      * **TEST_CASES:** Correctly calculates balances for accounts with no transactions, only cleared transactions, only uncleared transactions, and a mix of both.
+      * **COMPLETED:** 2025-09-05 - Implemented `get_account_balance` in `BudgetCalculator` and verified with comprehensive tests. All tests passed, and linting issues were resolved by configuring `flake8` to align with `black`'s formatting.
+      * **LEARNINGS:**
+        - **Linting Configuration**: It's crucial to ensure linting tools (like `flake8`) are correctly configured to match code formatters (like `black`) to avoid unnecessary conflicts. Using a `.flake8` file is a reliable way to achieve this when `pyproject.toml` integration is problematic.
+        - **Automated Formatting**: Tools like `black` are invaluable for maintaining code style and reducing manual linting fixes.
+
+  * **TASK 2.13: (TDD) Refactor CLI to use Subcommands** ✅ **COMPLETED**
+      * **GOAL:** Reorganize the CLI to use a subcommand structure for better organization and scalability.
+      * **APPROACH:** Create new `budget` and `accounts` subcommands. Move the existing `load` command to be `budget show`. Create `accounts list` command. Remove the `inspect` command and move its functionality to the new subcommands.
+      * **TEST_CASES:** `ynab-ai budget show --budget-path <path>` runs successfully. `ynab-ai accounts list --budget-path <path>` runs successfully.
+      * **COMPLETED:** 2025-09-06 - Successfully refactored CLI from individual commands to subcommand structure using TDD methodology. Implemented `budget show`, `accounts list` commands and standardized all commands to use `--budget-path` parameter. Updated all 26 existing tests to work with new subcommand structure. All 187 tests passing with 92.41% coverage. Eliminated code duplication and maintained comprehensive error handling.
+      * **LEARNINGS:**
+        - **Subcommand Architecture**: Typer's sub-applications provide clean separation of concerns and better CLI organization for scalable command structures
+        - **Parameter Consistency**: Standardizing parameter names across all commands (`--budget-path`) creates predictable user experience and easier maintenance
+        - **Test Migration Strategy**: When refactoring interfaces, updating existing tests is critical - failing tests indicate broken functionality even when new functionality works
+        - **TDD → Code Quality Review Cycle**: Initial TDD implementation often requires refinement - the review-fix cycle ensures production standards are met
+        - **Error Handling Preservation**: Complex error handling systems must be carefully migrated to maintain user experience during interface refactoring
+

@@ -60,7 +60,6 @@ This policy ensures production-ready code that doesn't mislead future developers
 - Always follow TDD implementation with code-quality-reviewer agent review
 - Initial TDD implementations often contain over-engineering that needs to be trimmed
 - Code review helps ensure adherence to CLAUDE.md standards (no placeholder code, minimal implementation)
-- The review-fix cycle is essential for production-ready code
 
 **Complex System Implementation Patterns**:
 - Break complex systems (like YNAB4 write operations) into comprehensive test suites first
@@ -73,7 +72,6 @@ This policy ensures production-ready code that doesn't mislead future developers
 - API design consistency across methods creates predictable and cohesive interfaces
 - Even small consolidation changes can have large positive impacts on code quality
 - Comprehensive integration testing validates not just individual changes but entire architectural improvements
-- The TDD → Code Quality Review cycle ensures both functional correctness and adherence to standards
 
 **Test Suite Optimization and Coverage Analysis**:
 - Proactive test duplication analysis prevents maintenance bloat and improves test suite efficiency
@@ -82,11 +80,15 @@ This policy ensures production-ready code that doesn't mislead future developers
 - Existing comprehensive test suites may already cover new functionality through different testing approaches
 - Regular test suite reviews help identify and eliminate redundant test scenarios
 
+**CLI Architecture and Interface Patterns**:
+- Subcommand architecture with Typer provides clean separation of concerns and better scalability than flat command structures
+- Parameter consistency across all commands creates predictable user experience and reduces cognitive load
+- Code duplication in CLI commands should be eliminated through shared utility functions, but avoid over-abstraction
+
 **Data Model Discovery and Business Logic Correctness**:
 - Always examine actual fixture data (YNAB4 files) to understand true data structure before implementing business logic
 - Missing fields in models (like `categoryId` in Transaction) can lead to fundamentally flawed implementations
 - Initial business logic based on assumptions (amount matching) may be completely incorrect without proper data analysis
-- The TDD → Code Quality Review → Fix cycle is essential for catching critical architectural and implementation errors
 - Proper type annotations with model imports and generators ensure type safety and catch potential runtime errors
 
 ## External Dependencies Integration Checklist
