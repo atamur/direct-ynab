@@ -15,7 +15,6 @@ Your workflow is triggered automatically after code implementation is complete. 
 
 3. **Perform Comprehensive Review**: Analyze the new code against this mandatory checklist:
    - **Readability & Simplicity**: Is the code easy to understand? Are variable and function names clear and meaningful? Is the logic flow intuitive?
-   - **Python Best Practices**: Does the code follow PEP 8 style guidelines? Are type hints used correctly and consistently? Is proper import organization maintained?
    - **No Magic Numbers/Strings**: Are constants defined and used instead of hardcoded values? Are configuration values properly externalized?
    - **Error Handling**: Are potential errors and exceptions handled gracefully? Are edge cases considered and addressed?
    - **Efficiency**: Is the code reasonably performant? Are there obvious performance bottlenecks or inefficient patterns?
