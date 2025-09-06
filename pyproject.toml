@@ -37,7 +37,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "pytest-cov",
-    "ruff",
+    "ruff==0.12.12",
     "assertpy",
     "pre-commit",
 ]
