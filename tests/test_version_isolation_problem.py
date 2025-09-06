@@ -9,6 +9,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
+
 from ynab_io.parser import YnabParser
 
 
@@ -99,9 +100,9 @@ class TestVersionIsolationProblem:
                     deltas_beyond_target_were_processed.append(delta_file)
 
             # OLD behavior: problematic deltas were processed
-            assert (
-                len(deltas_beyond_target_were_processed) > 0
-            ), "Old behavior should have processed deltas beyond target"
+            assert len(deltas_beyond_target_were_processed) > 0, (
+                "Old behavior should have processed deltas beyond target"
+            )
 
         # Test NEW behavior: parse_up_to_version (fixed)
         with patch.object(YnabParser, "_apply_delta") as mock_apply_delta_new:
@@ -118,6 +119,6 @@ class TestVersionIsolationProblem:
                     deltas_beyond_target_were_processed_new.append(delta_file)
 
             # NEW behavior: no problematic deltas were processed (fixed!)
-            assert (
-                len(deltas_beyond_target_were_processed_new) == 0
-            ), "New behavior should not process deltas beyond target"
+            assert len(deltas_beyond_target_were_processed_new) == 0, (
+                "New behavior should not process deltas beyond target"
+            )

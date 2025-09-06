@@ -3,6 +3,7 @@
 from pathlib import Path
 
 import pytest
+
 from ynab_io.testing import budget_version
 
 

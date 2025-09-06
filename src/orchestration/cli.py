@@ -2,13 +2,14 @@
 
 import errno
 import json
+from collections.abc import Generator
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Generator, TypeVar
+from typing import Annotated, TypeVar
 
 import typer
 from filelock import Timeout
-from typing_extensions import Annotated
+
 from ynab_io.parser import YnabParser
 from ynab_io.safety import BackupManager, LockManager
 

@@ -104,6 +104,6 @@ class TestRobustDeviceSelection:
         # But we want device C (latest knowledge)
 
         # If current implementation is used, this should fail
-        assert (
-            parser.device_dir.name == device_c_guid
-        ), f"Expected device C ({device_c_guid}) but got {parser.device_dir.name}"
+        assert parser.device_dir.name == device_c_guid, (
+            f"Expected device C ({device_c_guid}) but got {parser.device_dir.name}"
+        )

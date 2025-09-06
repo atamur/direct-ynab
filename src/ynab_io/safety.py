@@ -3,7 +3,6 @@
 import zipfile
 from datetime import datetime
 from pathlib import Path
-from typing import Union
 
 from filelock import FileLock
 
@@ -11,7 +10,7 @@ from filelock import FileLock
 class BackupManager:
     """Manages backup operations for YNAB4 budget files."""
 
-    def backup_budget(self, budget_path: Union[str, Path]) -> Path:
+    def backup_budget(self, budget_path: str | Path) -> Path:
         """
         Create a timestamped ZIP backup of a YNAB4 budget directory.
 
@@ -62,7 +61,7 @@ class BackupManager:
 class LockManager:
     """Manages file locking for YNAB4 budget operations to prevent concurrent access."""
 
-    def __init__(self, budget_path: Union[str, Path], timeout: float = 10.0):
+    def __init__(self, budget_path: str | Path, timeout: float = 10.0):
         """
         Initialize the LockManager.
 

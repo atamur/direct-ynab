@@ -643,7 +643,7 @@ class TestYdeviceUpdate:
             json.dump(initial_data, f)
 
         # Mock file write failure to test atomic behavior
-        with patch("builtins.open", side_effect=IOError("Disk full")):
+        with patch("builtins.open", side_effect=OSError("Disk full")):
             with pytest.raises(IOError):
                 device_manager.update_device_knowledge(ydevice_path=ydevice_path, new_knowledge="A-89")
 

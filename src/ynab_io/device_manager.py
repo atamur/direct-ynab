@@ -12,7 +12,7 @@ import re
 import uuid
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 # Constants for YNAB4 device management
 DEFAULT_YNAB_VERSION = "Desktop version: YNAB 4 v4.3.857"
@@ -26,7 +26,7 @@ MAX_DEVICE_COUNT = 26  # A-Z
 class DeviceManager:
     """Manages YNAB4 device registration and knowledge tracking."""
 
-    def __init__(self, budget_dir: Optional[Path] = None, create_backups: bool = False):
+    def __init__(self, budget_dir: Path | None = None, create_backups: bool = False):
         """Initialize DeviceManager.
 
         Args:
@@ -91,7 +91,7 @@ class DeviceManager:
 
         return self._get_fallback_device_guid()
 
-    def _collect_device_knowledges(self) -> Dict[str, str]:
+    def _collect_device_knowledges(self) -> dict[str, str]:
         """Collect knowledge versions from all valid .ydevice files.
 
         Returns:
@@ -111,13 +111,13 @@ class DeviceManager:
 
                     if device_guid and knowledge:
                         device_knowledges[device_guid] = knowledge
-                except (json.JSONDecodeError, IOError):
+                except (OSError, json.JSONDecodeError):
                     # Skip corrupted device files
                     continue
 
         return device_knowledges
 
-    def _find_device_with_latest_knowledge(self, device_knowledges: Dict[str, str]) -> str:
+    def _find_device_with_latest_knowledge(self, device_knowledges: dict[str, str]) -> str:
         """Find the device GUID with the latest knowledge version.
 
         Args:
@@ -212,12 +212,12 @@ class DeviceManager:
         short_id: str,
         friendly_name: str,
         knowledge: str,
-        knowledge_in_full: Optional[str] = None,
+        knowledge_in_full: str | None = None,
         ynab_version: str = DEFAULT_YNAB_VERSION,
         device_type: str = DEFAULT_DEVICE_TYPE,
         format_version: str = DEFAULT_FORMAT_VERSION,
         data_version: str = DEFAULT_DATA_VERSION,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Create .ydevice file structure.
 
         Args:
@@ -269,7 +269,7 @@ class DeviceManager:
             "highestDataVersionImported": None,
         }
 
-    def assign_next_short_id(self, existing_ids: List[str]) -> str:
+    def assign_next_short_id(self, existing_ids: list[str]) -> str:
         """Assign next available short device ID.
 
         Args:
@@ -296,7 +296,7 @@ class DeviceManager:
         friendly_name: str,
         device_type: str = "Desktop",
         ynab_version: str = "4.3.857",
-    ) -> Dict[str, str]:
+    ) -> dict[str, str]:
         """Register a new device and create .ydevice file.
 
         Args:
@@ -342,7 +342,7 @@ class DeviceManager:
 
         return {"deviceGUID": device_guid, "shortDeviceId": short_id}
 
-    def parse_version_string(self, version_str: str) -> Tuple[str, int]:
+    def parse_version_string(self, version_str: str) -> tuple[str, int]:
         """Parse version string in 'A-86' format.
 
         Args:
@@ -404,7 +404,7 @@ class DeviceManager:
             else:
                 return 0
 
-    def parse_composite_knowledge_string(self, composite_str: str) -> List[Tuple[str, int]]:
+    def parse_composite_knowledge_string(self, composite_str: str) -> list[tuple[str, int]]:
         """Parse composite knowledge string like 'A-11429,B-63,C-52'.
 
         Handles both single version strings (e.g., 'A-86') and composite
@@ -480,7 +480,7 @@ class DeviceManager:
         latest_version = max(parsed_versions, key=lambda x: (x[1], x[0]))
         return f"{latest_version[0]}-{latest_version[1]}"
 
-    def get_latest_version(self, versions: List[str]) -> str:
+    def get_latest_version(self, versions: list[str]) -> str:
         """Get the latest version from a list of knowledge strings.
 
         Processes both single version strings and composite knowledge strings,
@@ -521,7 +521,7 @@ class DeviceManager:
 
         return max(all_latest_versions, key=version_sort_key)
 
-    def get_global_knowledge(self) -> Optional[str]:
+    def get_global_knowledge(self) -> str | None:
         """Calculate global knowledge from all .ydevice files.
 
         Returns:
@@ -540,7 +540,7 @@ class DeviceManager:
 
                 if "knowledge" in ydevice_data:
                     all_knowledges.append(ydevice_data["knowledge"])
-            except (json.JSONDecodeError, IOError):
+            except (OSError, json.JSONDecodeError):
                 # Ignore corrupted or unreadable files
                 continue
 
@@ -553,7 +553,7 @@ class DeviceManager:
         self,
         ydevice_path: Path,
         new_knowledge: str,
-        new_full_budget_knowledge: Optional[str] = None,
+        new_full_budget_knowledge: str | None = None,
     ) -> None:
         """Update device knowledge in .ydevice file.
 

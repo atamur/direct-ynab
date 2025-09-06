@@ -7,6 +7,7 @@ system to make them resilient to fixture data changes.
 from pathlib import Path
 
 from assertpy import assert_that
+
 from ynab_io.models import Account, Payee, Transaction
 from ynab_io.testing import budget_version
 

@@ -38,10 +38,8 @@ dependencies = [
 dev = [
     "pytest-cov",
     "ruff",
-    "mypy",
     "assertpy",
     "pre-commit",
-    "docformatter",
 ]
 
 [project.scripts]
@@ -89,21 +87,17 @@ exclude_lines = [
 [tool.coverage.html]
 directory = "htmlcov"
 
-
-[tool.mypy]
-python_version = "3.12"
-warn_return_any = true
-warn_unused_configs = true
-disallow_untyped_defs = true
-mypy_path = "src"
-namespace_packages = true
-explicit_package_bases = true
-
 [tool.ruff]
 line-length = 120
 target-version = "py312"
 extend-exclude = ["tests/fixtures"]
 
 [tool.ruff.lint]
-select = ["E","F","W","I"]
-ignore = ["E501"]  # leave line length to the formatter
+select = ["E", "F", "W", "I", "B", "A", "C4", "UP", "PL"]
+ignore = [
+    "E501", # let formatter handle wrapping
+    "PLR", # skip refactor-only complexity nags
+    "PLC0415", # i want my imports where i want them
+    "B904", # whatever - i'm fine with exceptions
+    "UP015", # let's leave for readability
+]

@@ -11,7 +11,7 @@ This module handles:
 import json
 import re
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any
 
 from .device_manager import DeviceManager
 from .models import Account, Payee, Transaction
@@ -25,7 +25,7 @@ YDIFF_FILENAME_PATTERN = re.compile(r"^([A-Z]-\d+)_([A-Z]-\d+)\.ydiff")
 class YnabWriter:
     """Handles YNAB4 delta file generation and writing."""
 
-    def __init__(self, device_manager: Optional[DeviceManager] = None):
+    def __init__(self, device_manager: DeviceManager | None = None):
         """Initialize YnabWriter.
 
         Args:
@@ -40,7 +40,7 @@ class YnabWriter:
         end_version: str,
         device_guid: str,
         data_version: str = DEFAULT_DATA_VERSION,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Create base .ydiff JSON structure.
 
         Args:
@@ -69,10 +69,10 @@ class YnabWriter:
 
     def entity_to_ydiff_item(
         self,
-        entity: Union[Account, Payee, Transaction],
+        entity: Account | Payee | Transaction,
         entity_type: str,
         is_tombstone: bool = False,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Convert entity to .ydiff item format.
 
         Args:
@@ -104,10 +104,10 @@ class YnabWriter:
 
     def _create_base_ydiff_item(
         self,
-        entity: Union[Account, Payee, Transaction],
+        entity: Account | Payee | Transaction,
         entity_type: str,
         is_tombstone: bool,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Create base .ydiff item structure."""
         return {
             "entityType": entity_type,
@@ -118,7 +118,7 @@ class YnabWriter:
             "isResolvedConflict": False,
         }
 
-    def _serialize_transaction(self, transaction: Transaction) -> Dict[str, Any]:
+    def _serialize_transaction(self, transaction: Transaction) -> dict[str, Any]:
         """Serialize transaction entity to .ydiff format."""
         data = {
             "accountId": transaction.accountId,
@@ -131,7 +131,7 @@ class YnabWriter:
             data["memo"] = transaction.memo
         return data
 
-    def _serialize_account(self, account: Account) -> Dict[str, Any]:
+    def _serialize_account(self, account: Account) -> dict[str, Any]:
         """Serialize account entity to .ydiff format."""
         return {
             "accountName": account.accountName,
@@ -141,11 +141,11 @@ class YnabWriter:
             "hidden": account.hidden,
         }
 
-    def _serialize_payee(self, payee: Payee) -> Dict[str, Any]:
+    def _serialize_payee(self, payee: Payee) -> dict[str, Any]:
         """Serialize payee entity to .ydiff format."""
         return {"name": payee.name, "enabled": payee.enabled}
 
-    def create_tombstone_item(self, entity_id: str, entity_type: str, entity_version: str) -> Dict[str, Any]:
+    def create_tombstone_item(self, entity_id: str, entity_type: str, entity_version: str) -> dict[str, Any]:
         """Create a tombstone (deletion) item.
 
         Args:
@@ -167,10 +167,10 @@ class YnabWriter:
 
     def generate_ydiff(
         self,
-        entities: Dict[str, List],
+        entities: dict[str, list],
         start_version: str,
         end_version: str,
-        device_info: Dict[str, str],
+        device_info: dict[str, str],
     ) -> str:
         """Generate complete .ydiff file content.
 
@@ -212,7 +212,7 @@ class YnabWriter:
         """
         return f"{start_version}_{end_version}{YDIFF_EXTENSION}"
 
-    def parse_ydiff_filename(self, filename: str) -> Tuple[str, str]:
+    def parse_ydiff_filename(self, filename: str) -> tuple[str, str]:
         """Parse .ydiff filename to extract versions.
 
         Args:
@@ -251,7 +251,7 @@ class YnabWriter:
         except ValueError:
             return False
 
-    def write_changes(self, entities: Dict[str, List], current_knowledge: str, short_id: str) -> Dict[str, Any]:
+    def write_changes(self, entities: dict[str, list], current_knowledge: str, short_id: str) -> dict[str, Any]:
         """Write entity changes to .ydiff file and update .ydevice.
 
         Args:
@@ -300,5 +300,5 @@ class YnabWriter:
                 "ydiff_filename": ydiff_filename,
             }
 
-        except (FileNotFoundError, ValueError, IOError) as e:
+        except (OSError, FileNotFoundError, ValueError) as e:
             return {"success": False, "error": str(e)}

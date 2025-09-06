@@ -1,4 +1,4 @@
-from typing import Any, List, Optional
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict
 
@@ -26,13 +26,13 @@ class Transaction(BaseModel):
     model_config = ConfigDict(extra="ignore")
     entityId: str
     accountId: str
-    payeeId: Optional[str] = None
+    payeeId: str | None = None
     amount: float
     date: str
     cleared: str
     accepted: bool
     entityVersion: str
-    memo: Optional[str] = None
+    memo: str | None = None
 
 
 class MasterCategory(BaseModel):
@@ -58,7 +58,7 @@ class Category(BaseModel):
     masterCategoryId: str
     sortableIndex: int
     entityVersion: str
-    cachedBalance: Optional[Any] = None
+    cachedBalance: Any | None = None
 
 
 class MonthlyBudget(BaseModel):
@@ -68,7 +68,7 @@ class MonthlyBudget(BaseModel):
     entityId: str
     month: str
     entityVersion: str
-    monthlySubCategoryBudgets: Optional[List[Any]] = None
+    monthlySubCategoryBudgets: list[Any] | None = None
 
 
 class MonthlyCategoryBudget(BaseModel):
@@ -80,8 +80,8 @@ class MonthlyCategoryBudget(BaseModel):
     categoryId: str
     parentMonthlyBudgetId: str
     budgeted: float
-    overspendingHandling: Optional[str] = None
-    note: Optional[str] = None
+    overspendingHandling: str | None = None
+    note: str | None = None
 
 
 class ScheduledTransaction(BaseModel):
@@ -92,17 +92,17 @@ class ScheduledTransaction(BaseModel):
     frequency: str
     amount: float
     entityVersion: str
-    payeeId: Optional[str] = None
-    accountId: Optional[str] = None
-    date: Optional[str] = None
+    payeeId: str | None = None
+    accountId: str | None = None
+    date: str | None = None
 
 
 class Budget(BaseModel):
-    accounts: List[Account]
-    payees: List[Payee]
-    transactions: List[Transaction]
-    master_categories: List[MasterCategory]
-    categories: List[Category]
-    monthly_budgets: List[MonthlyBudget]
-    monthly_category_budgets: List[MonthlyCategoryBudget]
-    scheduled_transactions: List[ScheduledTransaction]
+    accounts: list[Account]
+    payees: list[Payee]
+    transactions: list[Transaction]
+    master_categories: list[MasterCategory]
+    categories: list[Category]
+    monthly_budgets: list[MonthlyBudget]
+    monthly_category_budgets: list[MonthlyCategoryBudget]
+    scheduled_transactions: list[ScheduledTransaction]

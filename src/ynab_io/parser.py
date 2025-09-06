@@ -2,7 +2,7 @@ import copy
 import json
 import logging
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 from .device_manager import DeviceManager
 from .models import (
@@ -30,18 +30,18 @@ class YnabParser:
             raise FileNotFoundError(f"Invalid YNAB4 budget structure: {e}")
         except ValueError as e:
             raise ValueError(f"Corrupted YNAB4 budget data: {e}")
-        self.accounts: Dict[str, Account] = {}
-        self.payees: Dict[str, Payee] = {}
-        self.transactions: Dict[str, Transaction] = {}
-        self.master_categories: Dict[str, MasterCategory] = {}
-        self.categories: Dict[str, Category] = {}
-        self.monthly_budgets: Dict[str, MonthlyBudget] = {}
-        self.monthly_category_budgets: Dict[str, MonthlyCategoryBudget] = {}
-        self.scheduled_transactions: Dict[str, ScheduledTransaction] = {}
+        self.accounts: dict[str, Account] = {}
+        self.payees: dict[str, Payee] = {}
+        self.transactions: dict[str, Transaction] = {}
+        self.master_categories: dict[str, MasterCategory] = {}
+        self.categories: dict[str, Category] = {}
+        self.monthly_budgets: dict[str, MonthlyBudget] = {}
+        self.monthly_category_budgets: dict[str, MonthlyCategoryBudget] = {}
+        self.scheduled_transactions: dict[str, ScheduledTransaction] = {}
 
         # Version tracking state
-        self.applied_deltas: List[Path] = []
-        self._base_state: Dict = {}
+        self.applied_deltas: list[Path] = []
+        self._base_state: dict = {}
 
     def parse(self) -> Budget:
         """Parse the budget and apply all available deltas.
@@ -176,7 +176,7 @@ class YnabParser:
             self._apply_delta(delta_file)
             self.applied_deltas.append(delta_file)
 
-    def _discover_delta_files(self) -> List[Path]:
+    def _discover_delta_files(self) -> list[Path]:
         ydiff_files = list(self.device_dir.glob("*.ydiff"))
         return sorted(ydiff_files, key=self._get_delta_sort_key)
 
@@ -282,7 +282,7 @@ class YnabParser:
         _, end_version = self._parse_delta_versions(delta_path.name)
         return self._get_version_number_from_composite(end_version, f"delta file '{delta_path.name}'")
 
-    def get_available_versions(self) -> List[int]:
+    def get_available_versions(self) -> list[int]:
         """Get sorted list of available version numbers."""
         versions = [0]  # Base state version
 
@@ -293,7 +293,7 @@ class YnabParser:
 
         return sorted(versions)
 
-    def _capture_current_state(self) -> Dict[str, Any]:
+    def _capture_current_state(self) -> dict[str, Any]:
         """Capture the current parser state as a deep copy.
 
         Returns:
@@ -310,7 +310,7 @@ class YnabParser:
             "scheduled_transactions": copy.deepcopy(self.scheduled_transactions),
         }
 
-    def _restore_from_state(self, state: Dict[str, Any]):
+    def _restore_from_state(self, state: dict[str, Any]):
         """Restore parser collections from a saved state.
 
         Args:

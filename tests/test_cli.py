@@ -7,8 +7,9 @@ from unittest.mock import MagicMock, Mock, patch
 import pytest
 from assertpy import assert_that
 from filelock import Timeout
-from orchestration.cli import app
 from typer.testing import CliRunner
+
+from orchestration.cli import app
 
 
 class TestEnhancedErrorHandling:

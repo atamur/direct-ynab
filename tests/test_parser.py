@@ -6,6 +6,7 @@ from unittest.mock import mock_open, patch
 
 import pytest
 from assertpy import assert_that
+
 from ynab_io.models import (
     Account,
     Category,

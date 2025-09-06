@@ -13,8 +13,8 @@ Example usage:
 """
 
 import functools
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable, Optional
 
 import pytest
 
@@ -115,7 +115,7 @@ def version_aware_parser(request):
     return parser
 
 
-def _get_test_version_annotation(test_function: Callable) -> Optional[int]:
+def _get_test_version_annotation(test_function: Callable) -> int | None:
     """Extract version annotation from test function if present.
 
     Args:

@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pytest
 from assertpy import assert_that
+
 from ynab_io.testing import budget_version
 
 from .conftest import assert_parser_collections_populated
