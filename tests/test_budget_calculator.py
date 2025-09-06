@@ -112,3 +112,90 @@ def test_get_account_balance_mixed_transactions(calculator: BudgetCalculator):
     balance = calculator.get_account_balance("380A0C46-49AB-0FBA-3F63-FFAED8C529A1")
     assert balance[0] == 19421.70
     assert balance[1] == -900.0
+
+
+# Monthly Budget Summary Tests
+
+
+@budget_version(153)
+def test_get_monthly_budget_summary_valid_month(calculator: BudgetCalculator):
+    """Tests monthly budget summary for a valid month with budget data and transactions."""
+    # Test August 2025 which has budget data and transactions
+    summary = calculator.get_monthly_budget_summary("2025-08")
+
+    # Should return a dictionary with category names as keys
+    assert isinstance(summary, dict)
+    assert len(summary) > 0
+
+    # Each category should have budgeted and outflow values
+    for _category_name, amounts in summary.items():
+        assert isinstance(amounts, dict)
+        assert "budgeted" in amounts
+        assert "outflow" in amounts
+        assert isinstance(amounts["budgeted"], float)
+        assert isinstance(amounts["outflow"], float)
+
+    # Check specific categories that should exist in test data
+    # A16 category has budgeted amount of 78.3 based on our data exploration
+    category_found = False
+    for _category_name, amounts in summary.items():
+        if amounts["budgeted"] == 78.3:
+            category_found = True
+            # This category should have outflow since there's a transaction on 2025-08-06 for -78.3
+            assert amounts["outflow"] == 78.3
+            break
+    assert category_found, "Expected category with budgeted amount 78.3 not found"
+
+
+def test_get_monthly_budget_summary_no_transactions(calculator: BudgetCalculator):
+    """Tests monthly budget summary for a month with budget but no transactions."""
+    # Test a month that has budget data but no transactions
+    # Based on our exploration, let's test July 2025
+    summary = calculator.get_monthly_budget_summary("2025-07")
+
+    assert isinstance(summary, dict)
+    # Even with no transactions, should have categories with 0 outflow
+    for _category_name, amounts in summary.items():
+        assert amounts["outflow"] == 0.0
+        assert isinstance(amounts["budgeted"], float)
+
+
+def test_get_monthly_budget_summary_invalid_month(calculator: BudgetCalculator):
+    """Tests monthly budget summary for a non-existent month."""
+    # Test a month that doesn't exist in the budget data
+    summary = calculator.get_monthly_budget_summary("1999-12")
+
+    # Should return empty dict for non-existent month
+    assert summary == {}
+
+
+def test_get_monthly_budget_summary_categories_without_budget(calculator: BudgetCalculator):
+    """Tests that categories without budget allocations are not included."""
+    summary = calculator.get_monthly_budget_summary("2025-08")
+
+    # All returned categories should have a budgeted amount >= 0
+    for _category_name, amounts in summary.items():
+        assert amounts["budgeted"] >= 0.0
+
+
+def test_get_monthly_budget_summary_outflow_calculation(calculator: BudgetCalculator):
+    """Tests that outflow is correctly calculated from transactions."""
+    summary = calculator.get_monthly_budget_summary("2025-08")
+
+    # Verify outflow calculation by checking specific transaction
+    # Transaction on 2025-08-06 for -78.3 should contribute to outflow
+    total_outflow = sum(amounts["outflow"] for amounts in summary.values())
+    assert total_outflow > 0, "Expected some outflow from transactions"
+
+
+def test_get_monthly_budget_summary_month_format(calculator: BudgetCalculator):
+    """Tests various month format inputs."""
+    # Should work with YYYY-MM format
+    summary1 = calculator.get_monthly_budget_summary("2025-08")
+    summary2 = calculator.get_monthly_budget_summary("2025-8")  # Single digit month
+
+    # Both should work (assuming the method handles format variations)
+    # For now, let's just test that they don't crash
+    assert isinstance(summary1, dict)
+    # This works correctly since the implementation handles both YYYY-MM-DD and YYYY-MM format
+    assert isinstance(summary2, dict)

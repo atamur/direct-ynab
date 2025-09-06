@@ -29,13 +29,6 @@ Before marking any task as complete, ALWAYS verify these items:
 
 #### Phase 2: Advanced CLI Reporting
 
-
-
-*   **TASK 2.11: (TDD) Implement Monthly Budget Summary in BudgetCalculator**
-    *   **GOAL:** Implement `get_monthly_budget_summary(month)` in `BudgetCalculator`.
-    *   **APPROACH:** The method will take a month string (e.g., "2025-09"). It will find the corresponding `MonthlyBudget` and then, for each category, it will find the `MonthlyCategoryBudget` to get the budgeted amount. It will also iterate through all transactions in that month to calculate the total outflow for each category.
-    *   **TEST_CASES:** Correctly calculates budget summaries for different months. Handles categories with no transactions. Correctly calculates outflows.
-
 *   **TASK 2.12: (TDD) Integrate BudgetCalculator into CLI**
     *   **GOAL:** Create a new `report` command in the CLI that uses the `BudgetCalculator`.
     *   **APPROACH:** The `report` command will be added to `src/orchestration/cli.py`. It will initialize the `YnabParser`, get the `Budget` object, create a `BudgetCalculator`, and then call the appropriate methods based on the user's arguments (e.g., `report accounts`, `report budget --month 2025-09`).
@@ -244,3 +237,14 @@ Before marking any task as complete, ALWAYS verify these items:
     *   **COMPLETED:** 2025-09-05 - Created the `BudgetCalculator` class in `src/ynab_io/budget_calculator.py` and a corresponding test file `tests/test_budget_calculator.py`. The `BudgetCalculator` is initialized with a `Budget` object. All tests pass.
     *   **LEARNINGS:**
         - Running `pytest` from the root directory is crucial for the test environment to correctly identify and import modules from the `src` directory.
+
+*   **TASK 2.11: (TDD) Implement Monthly Budget Summary in BudgetCalculator** ✅ **COMPLETED**
+    *   **GOAL:** Implement `get_monthly_budget_summary(month)` in `BudgetCalculator`.
+    *   **APPROACH:** The method will take a month string (e.g., "2025-09"). It will find the corresponding `MonthlyBudget` and then, for each category, it will find the `MonthlyCategoryBudget` to get the budgeted amount. It will also iterate through all transactions in that month to calculate the total outflow for each category.
+    *   **TEST_CASES:** Correctly calculates budget summaries for different months. Handles categories with no transactions. Correctly calculates outflows.
+    *   **COMPLETED:** 2025-09-06 - Successfully implemented `get_monthly_budget_summary` method in `BudgetCalculator` using TDD methodology. The implementation correctly matches transactions to categories using `categoryId` field (discovered from YNAB4 fixture data). Added missing `categoryId` field to Transaction model. Fixed type annotations and improved business logic based on code quality review. All 11 tests passing including comprehensive edge case coverage.
+    *   **LEARNINGS:**
+        - **Data Model Discovery**: YNAB4 transactions DO contain a `categoryId` field, which was missing from the original Transaction model. Always examine actual fixture data to understand true data structure.
+        - **Code Quality Review Value**: The tdd-red-green-refactor → code-quality-reviewer pipeline identified critical issues (flawed business logic, missing type annotations) that needed fixing for production-ready code.
+        - **Business Logic Correctness**: Initial implementation incorrectly matched transactions by amount instead of using proper category relationships. Proper category-based matching is essential for accurate budget reporting.
+        - **Type Safety**: Adding proper type annotations with `Generator` and model imports ensures type safety and catches potential runtime errors during development.

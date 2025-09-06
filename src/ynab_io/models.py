@@ -26,6 +26,7 @@ class Transaction(BaseModel):
     model_config = ConfigDict(extra="ignore")
     entityId: str
     accountId: str
+    categoryId: str | None = None
     payeeId: str | None = None
     amount: float
     date: str

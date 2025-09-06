@@ -82,6 +82,13 @@ This policy ensures production-ready code that doesn't mislead future developers
 - Existing comprehensive test suites may already cover new functionality through different testing approaches
 - Regular test suite reviews help identify and eliminate redundant test scenarios
 
+**Data Model Discovery and Business Logic Correctness**:
+- Always examine actual fixture data (YNAB4 files) to understand true data structure before implementing business logic
+- Missing fields in models (like `categoryId` in Transaction) can lead to fundamentally flawed implementations
+- Initial business logic based on assumptions (amount matching) may be completely incorrect without proper data analysis
+- The TDD → Code Quality Review → Fix cycle is essential for catching critical architectural and implementation errors
+- Proper type annotations with model imports and generators ensure type safety and catch potential runtime errors
+
 ## External Dependencies Integration Checklist
 
 When adding new external libraries, ALWAYS follow this checklist to avoid oversights:
