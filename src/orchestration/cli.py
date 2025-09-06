@@ -47,17 +47,19 @@ app = typer.Typer(help="YNAB4 Budget CLI Tool")
 # Create subcommand groups
 budget_app = typer.Typer(help="Budget-related commands")
 accounts_app = typer.Typer(help="Account-related commands")
+transactions_app = typer.Typer(help="Transaction-related commands")
 
 # Add subcommands to main app
 app.add_typer(budget_app, name="budget")
 app.add_typer(accounts_app, name="accounts")
+app.add_typer(transactions_app, name="transactions")
 
 
 @contextmanager
 def locked_budget_operation(budget_path: str) -> Generator[Path, None, None]:
     """
     Context manager that validates budget path and acquires lock for safe operations.
-    Used by budget show, accounts list, and backup commands.
+    Used by budget show, accounts list, transactions list, and backup commands.
 
     Args:
         budget_path: String path to budget directory
@@ -362,6 +364,31 @@ def accounts_list(
 
     except Exception as e:
         handle_budget_error("listing accounts", e)
+
+
+@transactions_app.command("list")
+def transactions_list(
+    budget_path: Annotated[str, typer.Option("--budget-path", help="Path to the .ynab4 budget directory")],
+    output_format: Annotated[str, typer.Option("--format", help="Output format: text or table")] = "text",
+) -> None:
+    """Display transaction details.
+
+    Usage: [command] transactions list --budget-path /path/to/budget.ynab4 --format table
+    """
+    try:
+        with locked_budget_operation(budget_path) as path:
+            parser = YnabParser(path)
+            parser.parse()
+            parser.apply_deltas()
+
+            # Display transactions
+            if output_format == "table":
+                display_transactions_table(parser)
+            else:
+                display_transactions(parser)
+
+    except Exception as e:
+        handle_budget_error("listing transactions", e)
 
 
 def main() -> None:

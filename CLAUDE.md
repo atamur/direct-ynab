@@ -84,6 +84,7 @@ This policy ensures production-ready code that doesn't mislead future developers
 - Subcommand architecture with Typer provides clean separation of concerns and better scalability than flat command structures
 - Parameter consistency across all commands creates predictable user experience and reduces cognitive load
 - Code duplication in CLI commands should be eliminated through shared utility functions, but avoid over-abstraction
+- Subcommand extensibility: New subcommand groups can be easily added following established patterns (consistent parameter names, error handling, display functions)
 
 **Data Model Discovery and Business Logic Correctness**:
 - Always examine actual fixture data (YNAB4 files) to understand true data structure before implementing business logic

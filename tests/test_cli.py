@@ -390,6 +390,98 @@ class TestAccountsCommands:
         assert "Failed to acquire lock" in result.stderr
 
 
+class TestTransactionsCommands:
+    """Test cases for transactions subcommands."""
+
+    def test_transactions_list_success(self, runner, test_budget_path):
+        """Test transactions list command shows transaction details."""
+        result = runner.invoke(app, ["transactions", "list", "--budget-path", str(test_budget_path)])
+
+        assert result.exit_code == 0
+        assert "Transaction Details" in result.stdout
+        assert "Amount:" in result.stdout
+        assert "Date:" in result.stdout
+
+    def test_transactions_list_with_table_format(self, runner, test_budget_path):
+        """Test transactions list command with table format shows formatted table."""
+        result = runner.invoke(
+            app, ["transactions", "list", "--budget-path", str(test_budget_path), "--format", "table"]
+        )
+
+        assert result.exit_code == 0
+        # Rich table should contain these table formatting characters
+        assert "┏" in result.stdout  # Top-left corner (double line)
+        assert "┓" in result.stdout  # Top-right corner (double line)
+        assert "┃" in result.stdout  # Vertical border (double line)
+        assert "Payee" in result.stdout  # Table header
+        assert "Amount" in result.stdout  # Table header
+        assert "Date" in result.stdout  # Table header
+
+    def test_transactions_list_with_text_format(self, runner, test_budget_path):
+        """Test transactions list command with text format shows original output."""
+        result = runner.invoke(
+            app, ["transactions", "list", "--budget-path", str(test_budget_path), "--format", "text"]
+        )
+
+        assert result.exit_code == 0
+        assert "Transaction Details" in result.stdout
+        assert "Amount:" in result.stdout
+        assert "Date:" in result.stdout
+        # Should not contain table formatting
+        assert "┏" not in result.stdout
+        assert "┃" not in result.stdout
+
+    def test_transactions_list_default_format_is_text(self, runner, test_budget_path):
+        """Test transactions list command defaults to text format when no format specified."""
+        result = runner.invoke(app, ["transactions", "list", "--budget-path", str(test_budget_path)])
+
+        assert result.exit_code == 0
+        assert "Transaction Details" in result.stdout
+        assert "Amount:" in result.stdout
+        assert "Date:" in result.stdout
+        # Should not contain table formatting by default
+        assert "┏" not in result.stdout
+        assert "┃" not in result.stdout
+
+    def test_transactions_list_invalid_path(self, runner):
+        """Test transactions list command with invalid budget path."""
+        result = runner.invoke(app, ["transactions", "list", "--budget-path", "nonexistent/path"])
+
+        assert result.exit_code == 1
+        assert "Error: Budget path does not exist" in result.stderr
+
+    @patch("orchestration.cli.locked_budget_operation")
+    def test_transactions_list_uses_lock_manager(self, mock_locked_operation, runner, test_budget_path):
+        """Test transactions list command uses locked_budget_operation context manager."""
+        mock_context = MagicMock()
+        mock_context.__enter__.return_value = test_budget_path
+        mock_locked_operation.return_value = mock_context
+
+        result = runner.invoke(app, ["transactions", "list", "--budget-path", str(test_budget_path)])
+
+        # Verify locked_budget_operation was called with correct path
+        mock_locked_operation.assert_called_once_with(str(test_budget_path))
+
+        # Verify context manager was used
+        mock_context.__enter__.assert_called_once()
+        mock_context.__exit__.assert_called_once()
+
+        assert result.exit_code == 0
+
+    @patch("orchestration.cli.locked_budget_operation")
+    def test_transactions_list_lock_timeout_error(self, mock_locked_operation, runner, test_budget_path):
+        """Test transactions list command handles lock timeout error."""
+        mock_locked_operation.side_effect = Exception(
+            "Failed to acquire lock for budget: [Errno 11] Resource temporarily unavailable"
+        )
+
+        result = runner.invoke(app, ["transactions", "list", "--budget-path", str(test_budget_path)])
+
+        assert result.exit_code == 1
+        assert "Error listing transactions" in result.stderr
+        assert "Failed to acquire lock" in result.stderr
+
+
 class TestBackupCommand:
     """Test cases for backup command."""
 
